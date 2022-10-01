@@ -15,10 +15,6 @@ Motor bl_mtr(12);
 Motor fr_mtr(1);
 Motor br_mtr(2);
 
-Motor_Group left_g ({fl_mtr, bl_mtr});
-Motor_Group right_g ({fr_mtr, br_mtr});
-
-
 /**
  * Runs initialization code. This occurs as soon as the program is started.
  *
@@ -78,12 +74,26 @@ void autonomous() {
 void opcontrol() {
 	int left;
 	int right;
+
+	Motor extra(5);
 	bool trigger;
+
+	Motor_Group left_g ({fl_mtr, bl_mtr});
+	Motor_Group right_g ({fr_mtr, br_mtr});
 
 
 	while (true) {
 		left = master.get_analog(ANALOG_LEFT_Y);
 		right = master.get_analog(ANALOG_RIGHT_Y);
+
+		/*if (master.get_digital(E_CONTROLLER_DIGITAL_RIGHT)) {
+			extra.move(-63);
+		} else if (master.get_digital(E_CONTROLLER_DIGITAL_LEFT)){
+			extra.move(63);
+		} else {
+			extra.move(0);
+		}
+		*/ 
 
 		left_g.move(left);
 		right_g.move(-right);

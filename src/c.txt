@@ -18,6 +18,7 @@ Motor br_mtr(2);
 Motor_Group left_g ({fl_mtr, bl_mtr});
 Motor_Group right_g ({fr_mtr, br_mtr});
 
+Motor roller(5);
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -59,7 +60,15 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-	
+	left_g.move(-50);
+	right_g.move(50);
+	roller.move(-90);
+
+	delay(1000);
+
+	left_g.move(0);
+	right_g.move(0);
+	roller.move(0);
 }
 
 /**
@@ -85,8 +94,16 @@ void opcontrol() {
 		left = master.get_analog(ANALOG_LEFT_Y);
 		right = master.get_analog(ANALOG_RIGHT_Y);
 
-		left_g.move(left);
-		right_g.move(-right);
+		if (master.get_digital(E_CONTROLLER_DIGITAL_RIGHT)) {
+			roller.move(-127);
+		} else if (master.get_digital(E_CONTROLLER_DIGITAL_LEFT)){
+			roller.move(127);
+		} else {
+			roller.move(0);
+		}
+
+		left_g.move(-left);
+		right_g.move(right);
 
 		delay(20);
 	}
