@@ -82,18 +82,23 @@ void opcontrol() {
 	Motor fr_mtr(11);
 	Motor br_mtr(12);
 
+	int move;
+	int turn;
+
+	bool trigger;
+
+	Motor extra(5);
+
 	Motor_Group left_g ({fl_mtr, br_mtr});
 	left_g.set_reversed(true);
 	Motor_Group right_g ({fr_mtr, br_mtr});
 
 
 	while (true) {
-		lcd::print(0, "%d %d %d", (lcd::read_buttons() & LCD_BTN_LEFT) >> 2,
-		                 (lcd::read_buttons() & LCD_BTN_CENTER) >> 1,
-		                 (lcd::read_buttons() & LCD_BTN_RIGHT) >> 0);
-		
-		int move = master.get_analog(ANALOG_LEFT_Y);
-		int turn = master.get_analog(ANALOG_RIGHT_X);
+		move = master.get_analog(ANALOG_LEFT_Y);
+		turn = master.get_analog(ANALOG_RIGHT_X);
+
+		trigger = master,g
 
 		left_g.move(move-turn);
 		right_g.move(move+turn);
