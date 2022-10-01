@@ -1,6 +1,7 @@
 #include "main.h"
-#include "pros/motors.hpp"
+#include "DriveTrain.h"
 using namespace pros;
+
 
 /**
  * A callback function for LLEMU's center button.
@@ -8,16 +9,6 @@ using namespace pros;
  * When this callback is fired, it will toggle line 2 of the LCD text between
  * "I was pressed!" and nothing.
  */
- 
-Controller master(E_CONTROLLER_MASTER);
-Motor fl_mtr(11);
-Motor bl_mtr(12);
-Motor fr_mtr(1);
-Motor br_mtr(2);
-
-Motor_Group left_g ({fl_mtr, bl_mtr});
-Motor_Group right_g ({fr_mtr, br_mtr});
-
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -25,9 +16,13 @@ Motor_Group right_g ({fr_mtr, br_mtr});
  * All other competition modes are blocked by initialize; it is recommended
  * to keep execution time for this mode under a few seconds.
  */
-void initialize() {
-	lcd::initialize();
-}
+
+Controller master(E_CONTROLLER_MASTER);
+
+int team = 1;
+DriveTrain dt = DriveTrain(team);
+
+void initialize() { lcd::initialize(); }
 
 /**
  * Runs while the robot is in the disabled state of Field Management System or
@@ -59,7 +54,13 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-	
+	dt.tankDrive(30, 30);
+	delay(1000);
+	dt.tankDrive(10, 10);
+	dt.moveRoller(127);
+	delay(2000);
+	dt.moveRoller(0);
+	dt.tankDrive(0, 0);
 }
 
 /**
@@ -76,18 +77,24 @@ void autonomous() {
  * task, not resume it from where it left off.
  */
 void opcontrol() {
-	int left;
-	int right;
 	bool trigger;
 
-
 	while (true) {
-		left = master.get_analog(ANALOG_LEFT_Y);
-		right = master.get_analog(ANALOG_RIGHT_Y);
+		if (team >= 2) {
+			dt.tankDrive(master.get_analog(ANALOG_LEFT_Y), master.get_analog(ANALOG_RIGHT_Y));
+		} else {
+			dt.arcadeDrive(master.get_analog(ANALOG_LEFT_Y), master.get_analog(ANALOG_RIGHT_X));
+		}
+		if (master.get_digital(E_CONTROLLER_DIGITAL_RIGHT)) {
+			dt.moveRoller(-127);
+		} else if (master.get_digital(E_CONTROLLER_DIGITAL_LEFT)){
+			dt.moveRoller(127);
+		} else {
+			dt.moveRoller(0);
+		}
+		
+		if (master.get_digital(E_CONTROLLER_DIGITAL_A)) {dt.extend();};
 
-		left_g.move(left);
-		right_g.move(-right);
-
-		delay(20);
-	}
+        delay(20);
+    }
 }
