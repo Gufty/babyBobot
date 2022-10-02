@@ -13,6 +13,7 @@ class DriveTrain {
 
     Motor roller = Motor(5);
     Motor extender = Motor(6);
+    int pos;
 
     public:
         DriveTrain(int team) {
@@ -24,6 +25,8 @@ class DriveTrain {
             } else {
                 left_g.set_reversed(true);
             }
+
+            pos = extender.get_position();
         }
 
         void tankDrive(int leftY, int rightY){
@@ -37,9 +40,10 @@ class DriveTrain {
         void moveRoller(int voltage) {
             roller.move(voltage);
         }
-        void extend() {
-            extender.move(127);
-            delay(2500);
-            extender.move(0);
+        void extend(int voltage) {
+            extender.move(voltage);
+        }
+        void stayExtender() {
+            extender.move_absolute(pos, 30);
         }
 };

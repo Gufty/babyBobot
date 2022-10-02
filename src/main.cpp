@@ -19,7 +19,7 @@ using namespace pros;
 
 Controller master(E_CONTROLLER_MASTER);
 
-int team = 1;
+int team = 3;
 DriveTrain dt = DriveTrain(team);
 
 void initialize() { lcd::initialize(); }
@@ -54,13 +54,9 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-	dt.tankDrive(30, 30);
-	delay(1000);
-	dt.tankDrive(10, 10);
 	dt.moveRoller(127);
-	delay(2000);
+	delay(250);
 	dt.moveRoller(0);
-	dt.tankDrive(0, 0);
 }
 
 /**
@@ -77,23 +73,27 @@ void autonomous() {
  * task, not resume it from where it left off.
  */
 void opcontrol() {
-	bool trigger;
+	bool stay = true;
 
 	while (true) {
 		if (team >= 2) {
 			dt.tankDrive(master.get_analog(ANALOG_LEFT_Y), master.get_analog(ANALOG_RIGHT_Y));
+
+			if (master.get_digital(E_CONTROLLER_DIGITAL_R1)) {dt.extend(-64); stay = false;}
+			else if (master.get_digital(E_CONTROLLER_DIGITAL_L1)) {dt.extend(64); stay = false;}
+			else {dt.extend(0);}
+
+			if(stay){dt.stayExtender();}
+			
 		} else {
 			dt.arcadeDrive(master.get_analog(ANALOG_LEFT_Y), master.get_analog(ANALOG_RIGHT_X));
 		}
-		if (master.get_digital(E_CONTROLLER_DIGITAL_RIGHT)) {
-			dt.moveRoller(-127);
-		} else if (master.get_digital(E_CONTROLLER_DIGITAL_LEFT)){
-			dt.moveRoller(127);
-		} else {
-			dt.moveRoller(0);
-		}
-		
-		if (master.get_digital(E_CONTROLLER_DIGITAL_A)) {dt.extend();};
+
+		if (team != 2) {
+			if (master.get_digital(E_CONTROLLER_DIGITAL_R2)) {dt.moveRoller(-127);}
+			else if (master.get_digital(E_CONTROLLER_DIGITAL_L2)){dt.moveRoller(127);}
+			else {dt.moveRoller(0);}
+		} 
 
         delay(20);
     }
