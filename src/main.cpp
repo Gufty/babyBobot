@@ -1,26 +1,14 @@
 #include "main.h"
-#include "DriveTrain.h"
+#include "systems/DriveTrain.h"
+#include "systems/Roller.h"
+#include "systems/Extender.h"
 using namespace pros;
-
-
-/**
- * A callback function for LLEMU's center button.
- *
- * When this callback is fired, it will toggle line 2 of the LCD text between
- * "I was pressed!" and nothing.
- */
-
-/**
- * Runs initialization code. This occurs as soon as the program is started.
- *
- * All other competition modes are blocked by initialize; it is recommended
- * to keep execution time for this mode under a few seconds.
- */
 
 Controller master(E_CONTROLLER_MASTER);
 
-int team = 3;
-DriveTrain dt = DriveTrain(team);
+DriveTrain dt = DriveTrain();
+Roller roll = Roller();
+Extender xtend = Extender();
 
 void initialize() { lcd::initialize(); }
 
@@ -54,9 +42,7 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-	dt.moveRoller(127);
-	delay(250);
-	dt.moveRoller(0);
+	roll.rollerHalfStep();
 }
 
 /**
@@ -73,27 +59,14 @@ void autonomous() {
  * task, not resume it from where it left off.
  */
 void opcontrol() {
-	bool stay = true;
-
 	while (true) {
-		if (team >= 2) {
-			dt.tankDrive(master.get_analog(ANALOG_LEFT_Y), master.get_analog(ANALOG_RIGHT_Y));
+		dt.arcadeDrive(master.get_analog(E_CONTROLLER_ANALOG_LEFT_Y), master.get_analog(E_CONTROLLER_ANALOG_RIGHT_Y));
 
-			if (master.get_digital(E_CONTROLLER_DIGITAL_R1)) {dt.extend(-64); stay = false;}
-			else if (master.get_digital(E_CONTROLLER_DIGITAL_L1)) {dt.extend(64); stay = false;}
-			else {dt.extend(0);}
+		if (master.get_digital(E_CONTROLLER_DIGITAL_L1)) {roll.rollerHalfStep();}
+		if (master.get_digital(E_CONTROLLER_DIGITAL_L2)) {roll.rollerHalfStep(-1);}
 
-			if(stay){dt.stayExtender();}
-			
-		} else {
-			dt.arcadeDrive(master.get_analog(ANALOG_LEFT_Y), master.get_analog(ANALOG_RIGHT_X));
-		}
-
-		if (team != 2) {
-			if (master.get_digital(E_CONTROLLER_DIGITAL_R2)) {dt.moveRoller(-127);}
-			else if (master.get_digital(E_CONTROLLER_DIGITAL_L2)){dt.moveRoller(127);}
-			else {dt.moveRoller(0);}
-		} 
+		if (master.get_digital(E_CONTROLLER_DIGITAL_R1)) {xtend.spoolXtend(1);}
+		if (master.get_digital(E_CONTROLLER_DIGITAL_R2)) {xtend.spoolXtend(-1);}
 
         delay(20);
     }
