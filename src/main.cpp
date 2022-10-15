@@ -1,7 +1,11 @@
 #include "main.h"
+#include "display/lv_core/lv_obj.h"
+#include "display/lv_draw/lv_draw_img.h"
 #include "systems/DriveTrain.h"
 #include "systems/Roller.h"
 #include "systems/Extender.h"
+
+#include "../include/display/lvgl.h"
 using namespace pros;
 
 Controller master(E_CONTROLLER_MASTER);
@@ -10,7 +14,17 @@ DriveTrain dt = DriveTrain();
 Roller roll = Roller();
 Extender xtend = Extender();
 
-void initialize() { lcd::initialize(); }
+void lv_disp(lv_img_dsc_t cArr)
+{
+    lv_obj_t * img = lv_img_create(lv_scr_act(), NULL);
+	lv_img_set_src(img, &cArr);
+    lv_obj_align(img, NULL, LV_ALIGN_IN_TOP_LEFT, 0, 0);
+}
+
+void initialize() { 
+	LV_IMG_DECLARE(alpha);
+	lv_disp(alpha);
+}
 
 /**
  * Runs while the robot is in the disabled state of Field Management System or
@@ -43,6 +57,8 @@ void competition_initialize() {}
  */
 void autonomous() {
 	roll.rollerHalfStep();
+	delay(300);
+	dt.tankDrive(30, 30);
 }
 
 /**

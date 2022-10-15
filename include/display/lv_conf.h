@@ -108,6 +108,7 @@
                                  function */
 #define LV_ATTRIBUTE_TASK_HANDLER
 #define LV_ATTRIBUTE_MEM_ALIGN
+#define LV_ATTRIBUTE_LARGE_CONST
 #define LV_COMPILER_VLA_SUPPORTED 1
 #define LV_COMPILER_NON_CONST_INIT_SUPPORTED 1
 

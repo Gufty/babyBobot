@@ -8,6 +8,7 @@ extern int bl_p;
 extern int fr_p;
 extern int br_p;
 extern int threshold;
+extern int inchesToUnits;
 
 class DriveTrain {
     Motor fl_mtr = Motor(fl_p);
@@ -34,5 +35,8 @@ class DriveTrain {
             rightX = abs(rightX)<threshold ? 0 : rightX;
             left_g.move(leftY + rightX);
             right_g.move(leftY - rightX);
+        }
+        void moveForward(int inches) {
+            left_g.move_relative(inches*inchesToUnits , 127);
         }
 };

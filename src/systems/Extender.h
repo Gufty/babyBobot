@@ -19,6 +19,7 @@ class Extender {
         std::function<void(int)> crossXtend;
 
         Extender() {
+            xtender.set_brake_mode(E_MOTOR_BRAKE_HOLD);
             xtender.tare_position();
 
             //needlessly complicated way to remove stay.remove()
