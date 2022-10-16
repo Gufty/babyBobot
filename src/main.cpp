@@ -1,10 +1,11 @@
 #include "main.h"
+#include "Display.h"
 #include "systems/DriveTrain.h"
 #include "systems/Roller.h"
 #include "systems/Extender.h"
 
-#include "../include/display/lvgl.h"
 using namespace pros;
+using namespace Display;
 
 Controller master(E_CONTROLLER_MASTER);
 
@@ -12,16 +13,53 @@ DriveTrain dt = DriveTrain();
 Roller roll = Roller();
 Extender xtend = Extender();
 
-void lv_disp(lv_img_dsc_t cArr)
+bool tank = true;
+
+lv_res_t toggleMode(lv_obj_t * btn)
 {
-    lv_obj_t * img = lv_img_create(lv_scr_act(), NULL);
-	lv_img_set_src(img, &cArr);
-    lv_obj_align(img, NULL, LV_ALIGN_IN_TOP_LEFT, 0, 0);
+    if (tank) {
+        dt.teleMove = [=](int leftY, int rightY){
+            dt.arcadeDrive(leftY, rightY);
+        };
+    } else {
+        dt.teleMove = [=](int leftY, int rightY){
+            dt.tankDrive(leftY, rightY);
+        };
+    }
+	tank = !tank;
+
+	btnSetToggled(btn, tank);
+
+    return LV_RES_OK;
+}
+
+bool blueTeam = true;
+
+lv_res_t toggleTeam(lv_obj_t * btn) {
+	if (blueTeam) {
+	} else {
+	}
+
+	blueTeam = !blueTeam;
+
+	btnSetToggled(btn, blueTeam);
+
+	return LV_RES_OK;
 }
 
 void initialize() { 
 	LV_IMG_DECLARE(alpha);
-	lv_disp(alpha);
+	lv_img_disp(alpha);
+
+	lv_style_t * modeBtnSty = createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 100, 0), LV_COLOR_MAKE(0, 125, 0), LV_COLOR_MAKE(0, 150, 150), LV_COLOR_MAKE(0, 150, 175), LV_COLOR_MAKE(0, 0, 0), LV_COLOR_MAKE(255, 255, 255), NULL);
+	lv_obj_t * modeButton = createBtn(NULL, (lv_coord_t) 200, (lv_coord_t) 160, (lv_coord_t) 40, (lv_coord_t) 20, 0, "Toggle Mode");
+	setBtnStyle(modeBtnSty, modeButton);
+	lv_btn_set_action(modeButton, LV_BTN_ACTION_CLICK, toggleMode);
+
+	lv_style_t * teamBtnSty = createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 0, 255), LV_COLOR_MAKE(0, 0, 125), LV_COLOR_MAKE(255, 0, 0), LV_COLOR_MAKE(125, 0, 0), LV_COLOR_MAKE(0, 0, 0), LV_COLOR_MAKE(255, 255, 255), NULL);
+	lv_obj_t * teamButton = createBtn(NULL, (lv_coord_t) 200, (lv_coord_t) 200, (lv_coord_t) 40, (lv_coord_t) 20, 0, "Toggle Team");
+	setBtnStyle(teamBtnSty, teamButton);
+	lv_btn_set_action(teamButton, LV_BTN_ACTION_CLICK, toggleTeam);
 }
 
 /**
@@ -74,7 +112,7 @@ void autonomous() {
  */
 void opcontrol() {
 	while (true) {
-		dt.arcadeDrive(master.get_analog(E_CONTROLLER_ANALOG_LEFT_Y), master.get_analog(E_CONTROLLER_ANALOG_RIGHT_Y));
+		dt.teleMove(master.get_analog(E_CONTROLLER_ANALOG_LEFT_Y), master.get_analog(E_CONTROLLER_ANALOG_RIGHT_Y));
 
 		if (master.get_digital(E_CONTROLLER_DIGITAL_L1)) {roll.rollerHalfStep();}
 		if (master.get_digital(E_CONTROLLER_DIGITAL_L2)) {roll.rollerHalfStep(-1);}

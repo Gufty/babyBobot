@@ -1,10 +1,9 @@
 #pragma once
 
 #include "pros/motors.hpp"
-
+#include "../Constants.h"
+using namespace Constants;
 using namespace pros;
-
-extern int xtend_p;
 
 class Extender {
     private:
@@ -41,6 +40,4 @@ class Extender {
                 };
             };
         }
-
-
 };

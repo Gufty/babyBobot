@@ -1,10 +1,10 @@
 #pragma once
 
 #include "pros/motors.hpp"
+#include "../Constants.h"
 
 using namespace pros;
-
-extern int roller_p;
+using namespace Constants;
 
 class Roller {
     private:
@@ -14,6 +14,6 @@ class Roller {
             roller.set_brake_mode(E_MOTOR_BRAKE_HOLD);
         }
         void rollerHalfStep(int direction = 1) {
-            roller.move_relative(45,127);
+            roller.move_relative(45*direction,127);
         }
 };
