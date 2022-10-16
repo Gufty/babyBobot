@@ -1,6 +1,4 @@
 #include "main.h"
-#include "display/lv_core/lv_obj.h"
-#include "display/lv_draw/lv_draw_img.h"
 #include "systems/DriveTrain.h"
 #include "systems/Roller.h"
 #include "systems/Extender.h"
