@@ -2,10 +2,10 @@
 #include <cstdlib>
 
 namespace Display {
-    static void lv_img_disp(lv_img_dsc_t cArr)
+    static void lv_img_disp(const lv_img_dsc_t* cArr)
     {
         lv_obj_t* img = lv_img_create(lv_scr_act(), NULL);
-        lv_img_set_src(img, &cArr);
+        lv_img_set_src(img, cArr);
         lv_obj_align(img, NULL, LV_ALIGN_IN_TOP_LEFT, 0, 0);
     }
 
@@ -22,7 +22,7 @@ namespace Display {
 
         return btn;
     }
-    static lv_style_t* createBtnStyle(lv_style_t* copy, lv_color_t rel, lv_color_t pr, lv_color_t tglRel, lv_color_t tglPr, lv_color_t tglBorder, lv_color_t textColor, lv_obj_t* btn)
+    static lv_style_t* createBtnStyle(lv_style_t* copy, lv_color_t rel, lv_color_t pr, lv_color_t tglRel, lv_color_t tglPr, lv_color_t tglBorder, lv_color_t textColor)
     {
         lv_style_t* btnStyle = (lv_style_t*)malloc(sizeof(lv_style_t)* 4);
 
@@ -47,11 +47,6 @@ namespace Display {
         btnStyle[3].body.border.width = 2;
         btnStyle[3].body.border.color = tglBorder;
         btnStyle[3].text.color = textColor;
-
-        lv_btn_set_style(btn, LV_BTN_STYLE_REL, &btnStyle[0]);
-        lv_btn_set_style(btn, LV_BTN_STYLE_PR, &btnStyle[1]);
-        lv_btn_set_style(btn, LV_BTN_STYLE_TGL_REL, &btnStyle[2]);
-        lv_btn_set_style(btn, LV_BTN_STYLE_TGL_PR, &btnStyle[3]);
 
         return btnStyle;
     }

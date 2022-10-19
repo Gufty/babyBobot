@@ -199,6 +199,7 @@
 #if USE_LV_IMG != 0
 #  define LV_IMG_CF_INDEXED 1
 #  define LV_IMG_CF_ALPHA 1
+#  define LV_USE_IMG
 #endif
 
 /*Line (dependencies: -*/

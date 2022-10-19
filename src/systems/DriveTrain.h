@@ -1,8 +1,10 @@
 #pragma once
 
+#include "pros/misc.hpp"
 #include "pros/motors.hpp"
 
 #include "../Constants.h"
+
 using namespace Constants;
 using namespace pros;
 
@@ -16,16 +18,12 @@ class DriveTrain {
     Motor_Group right_g = Motor_Group({fr_mtr,br_mtr});
 
     public:
-        std::function<void(int,int)> teleMove;
+        std::function<void(void)> teleMove;
 
         DriveTrain() {
             left_g.set_brake_modes(E_MOTOR_BRAKE_HOLD);
             right_g.set_brake_modes(E_MOTOR_BRAKE_HOLD);
-            right_g.set_reversed(true);
-
-            teleMove = [=](int leftY, int rightY){
-                tankDrive(leftY, rightY);
-            };
+            left_g.set_reversed(true);
         }
         void tankDrive(int leftY, int rightY){
             left_g.move(abs(leftY)<threshold ? 0 :leftY);

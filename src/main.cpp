@@ -18,13 +18,9 @@ bool tank = true;
 lv_res_t toggleMode(lv_obj_t * btn)
 {
     if (tank) {
-        dt.teleMove = [=](int leftY, int rightY){
-            dt.arcadeDrive(leftY, rightY);
-        };
+	dt.teleMove = [=]{dt.arcadeDrive(master.get_analog(E_CONTROLLER_ANALOG_LEFT_Y),master.get_analog(E_CONTROLLER_ANALOG_RIGHT_X));};
     } else {
-        dt.teleMove = [=](int leftY, int rightY){
-            dt.tankDrive(leftY, rightY);
-        };
+	dt.teleMove = [=]{dt.tankDrive(master.get_analog(E_CONTROLLER_ANALOG_LEFT_Y),master.get_analog(E_CONTROLLER_ANALOG_RIGHT_Y));};
     }
 	tank = !tank;
 
@@ -34,10 +30,13 @@ lv_res_t toggleMode(lv_obj_t * btn)
 }
 
 bool blueTeam = true;
+int8_t direction = 1;
 
 lv_res_t toggleTeam(lv_obj_t * btn) {
 	if (blueTeam) {
+		direction = -1;
 	} else {
+		direction = 1;
 	}
 
 	blueTeam = !blueTeam;
@@ -47,17 +46,17 @@ lv_res_t toggleTeam(lv_obj_t * btn) {
 	return LV_RES_OK;
 }
 
-void initialize() { 
+void initialize() {
 	LV_IMG_DECLARE(alpha);
-	lv_img_disp(alpha);
+	lv_img_disp(&alpha);
 
-	lv_style_t * modeBtnSty = createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 100, 0), LV_COLOR_MAKE(0, 125, 0), LV_COLOR_MAKE(0, 150, 150), LV_COLOR_MAKE(0, 150, 175), LV_COLOR_MAKE(0, 0, 0), LV_COLOR_MAKE(255, 255, 255), NULL);
-	lv_obj_t * modeButton = createBtn(NULL, (lv_coord_t) 200, (lv_coord_t) 160, (lv_coord_t) 40, (lv_coord_t) 20, 0, "Toggle Mode");
+	lv_obj_t * modeButton = createBtn(lv_scr_act(), (lv_coord_t) 200, (lv_coord_t) 160, (lv_coord_t) 150, (lv_coord_t) 20, 0, "Toggle Mode");
+	lv_style_t * modeBtnSty = createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 100, 0), LV_COLOR_MAKE(0, 125, 0), LV_COLOR_MAKE(0, 150, 150), LV_COLOR_MAKE(0, 150, 175), LV_COLOR_MAKE(0, 0, 0), LV_COLOR_MAKE(255, 255, 255));
 	setBtnStyle(modeBtnSty, modeButton);
 	lv_btn_set_action(modeButton, LV_BTN_ACTION_CLICK, toggleMode);
 
-	lv_style_t * teamBtnSty = createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 0, 255), LV_COLOR_MAKE(0, 0, 125), LV_COLOR_MAKE(255, 0, 0), LV_COLOR_MAKE(125, 0, 0), LV_COLOR_MAKE(0, 0, 0), LV_COLOR_MAKE(255, 255, 255), NULL);
-	lv_obj_t * teamButton = createBtn(NULL, (lv_coord_t) 200, (lv_coord_t) 200, (lv_coord_t) 40, (lv_coord_t) 20, 0, "Toggle Team");
+	lv_obj_t * teamButton = createBtn(lv_scr_act(), (lv_coord_t) 200, (lv_coord_t) 200, (lv_coord_t) 150, (lv_coord_t) 20, 1, "Toggle Team");
+	lv_style_t * teamBtnSty = createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 0, 255), LV_COLOR_MAKE(0, 0, 125), LV_COLOR_MAKE(255, 0, 0), LV_COLOR_MAKE(125, 0, 0), LV_COLOR_MAKE(0, 0, 0), LV_COLOR_MAKE(255, 255, 255));
 	setBtnStyle(teamBtnSty, teamButton);
 	lv_btn_set_action(teamButton, LV_BTN_ACTION_CLICK, toggleTeam);
 }
@@ -92,7 +91,7 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-	roll.rollerHalfStep();
+	roll.rollerHalfStep(direction);
 	delay(300);
 	dt.tankDrive(30, 30);
 }
@@ -111,8 +110,9 @@ void autonomous() {
  * task, not resume it from where it left off.
  */
 void opcontrol() {
+	dt.teleMove = [=]{dt.tankDrive(master.get_analog(E_CONTROLLER_ANALOG_LEFT_Y),master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y));};
 	while (true) {
-		dt.teleMove(master.get_analog(E_CONTROLLER_ANALOG_LEFT_Y), master.get_analog(E_CONTROLLER_ANALOG_RIGHT_Y));
+		dt.teleMove();
 
 		if (master.get_digital(E_CONTROLLER_DIGITAL_L1)) {roll.rollerHalfStep();}
 		if (master.get_digital(E_CONTROLLER_DIGITAL_L2)) {roll.rollerHalfStep(-1);}
