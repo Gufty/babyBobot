@@ -1,20 +1,32 @@
 #include "../include/display/lvgl.h"
+#include "display/lv_core/lv_obj.h"
+#include "display/lv_objx/lv_label.h"
 #include <cstdlib>
 
 namespace Display {
-    static void lv_img_disp(const lv_img_dsc_t* cArr)
+    static inline lv_obj_t* lv_img_disp(const lv_img_dsc_t* cArr)
     {
         lv_obj_t* img = lv_img_create(lv_scr_act(), NULL);
         lv_img_set_src(img, cArr);
         lv_obj_align(img, NULL, LV_ALIGN_IN_TOP_LEFT, 0, 0);
-    }
 
-    static lv_obj_t* createBtn(lv_obj_t* parent, lv_coord_t x, lv_coord_t y, lv_coord_t width, lv_coord_t height, int id, const char* title)
+        return img;
+    }
+    static inline lv_obj_t* createLabel(lv_obj_t* parent, lv_coord_t x, lv_coord_t y, lv_coord_t width, lv_coord_t height,const char* title) {
+        lv_obj_t* label =  lv_label_create(parent, NULL);
+        lv_obj_set_pos(label, x, y);
+        lv_obj_set_size(label, width, height);
+        lv_label_set_text(label,title);
+        lv_label_set_align(label, LV_LABEL_ALIGN_CENTER);
+        lv_obj_align(label, NULL, LV_ALIGN_IN_TOP_MID, 0, 5);
+
+        return label;
+    }
+    static inline lv_obj_t* createBtn(lv_obj_t* parent, lv_coord_t x, lv_coord_t y, lv_coord_t width, lv_coord_t height, const char* title)
     {
         lv_obj_t* btn = lv_btn_create(parent, NULL);
         lv_obj_set_pos(btn, x, y);
         lv_obj_set_size(btn, width, height);
-        lv_obj_set_free_num(btn, id);
 
         lv_obj_t* label = lv_label_create(btn, NULL);
         lv_label_set_text(label, title);
@@ -22,11 +34,11 @@ namespace Display {
 
         return btn;
     }
-    static lv_style_t* createBtnStyle(lv_style_t* copy, lv_color_t rel, lv_color_t pr, lv_color_t tglRel, lv_color_t tglPr, lv_color_t tglBorder, lv_color_t textColor)
+    static inline lv_style_t* createBtnStyle(lv_style_t* copy, lv_color_t rel, lv_color_t pr, lv_color_t tglRel, lv_color_t tglPr, lv_color_t tglBorder, lv_color_t textColor)
     {
         lv_style_t* btnStyle = (lv_style_t*)malloc(sizeof(lv_style_t)* 4);
 
-        for(int i = 0; i < 4; i++) lv_style_copy(&btnStyle[i], copy);
+        for(unsigned char i = 0; i < 4; i++) lv_style_copy(&btnStyle[i], copy);
 
         btnStyle[0].body.main_color = rel;
         btnStyle[0].body.grad_color = rel;
@@ -50,14 +62,14 @@ namespace Display {
 
         return btnStyle;
     }
-    static void setBtnStyle(lv_style_t* btnStyle, lv_obj_t* btn)
+    static inline void setBtnStyle(lv_style_t* btnStyle, lv_obj_t* btn)
     {
         lv_btn_set_style(btn, LV_BTN_STYLE_REL, &btnStyle[0]);
         lv_btn_set_style(btn, LV_BTN_STYLE_PR, &btnStyle[1]);
         lv_btn_set_style(btn, LV_BTN_STYLE_TGL_REL, &btnStyle[2]);
         lv_btn_set_style(btn, LV_BTN_STYLE_TGL_PR, &btnStyle[3]);
     }
-    static void btnSetToggled(lv_obj_t* btn, bool toggled)
+    static inline void btnSetToggled(lv_obj_t* btn, bool toggled)
     {
         if(toggled != (lv_btn_get_state(btn) >= 2)) lv_btn_toggle(btn);
     }

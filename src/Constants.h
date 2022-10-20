@@ -1,16 +1,20 @@
 #pragma once
 
 namespace Constants {
-    static const int fl_p = 11;
-    static const int bl_p = 12;
-    static const int fr_p = 1;
-    static const int br_p = 2;
+    static constexpr unsigned char fl_p = 11;
+    static constexpr unsigned char bl_p = 12;
+    static constexpr bool fr_p = 1;
+    static constexpr unsigned char br_p = 2;
 
-    static const int roller_p = 5;
-    static const int xtend_p = 6;
+    static constexpr unsigned char roller_p = 5;
+    static constexpr unsigned char xtend_p = 6;
 
-    static const int threshold = 10;
+    static constexpr unsigned char threshold = 10;
 
-    static const int wheelDiameter = 1;
-    static const int inchesToUnits = 2;
+    static constexpr float robotLength = 18.0f;
+
+    static constexpr float wheelDiameter = 4.0f;
+    static constexpr float trackwidth = 15.0f;
+
+    static constexpr unsigned char inchesToUnits = 2;
 };

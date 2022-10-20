@@ -3,6 +3,8 @@
 #include "systems/DriveTrain.h"
 #include "systems/Roller.h"
 #include "systems/Extender.h"
+#include "autonomous/Odometry.h"
+
 
 using namespace pros;
 using namespace Display;
@@ -15,7 +17,7 @@ Extender xtend = Extender();
 
 bool tank = true;
 
-lv_res_t toggleMode(lv_obj_t * btn)
+inline lv_res_t toggleMode(lv_obj_t * btn)
 {
     if (tank) {
 	dt.teleMove = [=]{dt.arcadeDrive(master.get_analog(E_CONTROLLER_ANALOG_LEFT_Y),master.get_analog(E_CONTROLLER_ANALOG_RIGHT_X));};
@@ -30,14 +32,11 @@ lv_res_t toggleMode(lv_obj_t * btn)
 }
 
 bool blueTeam = true;
-int8_t direction = 1;
 
-lv_res_t toggleTeam(lv_obj_t * btn) {
-	if (blueTeam) {
-		direction = -1;
+inline lv_res_t toggleTeam(lv_obj_t * btn) {
+	/*if (blueTeam) {
 	} else {
-		direction = 1;
-	}
+	}*/
 
 	blueTeam = !blueTeam;
 
@@ -47,18 +46,24 @@ lv_res_t toggleTeam(lv_obj_t * btn) {
 }
 
 void initialize() {
-	LV_IMG_DECLARE(alpha);
-	lv_img_disp(&alpha);
+	LV_IMG_DECLARE(normal);
+	lv_obj_t* backgroundImage = lv_img_disp(&normal);
 
-	lv_obj_t * modeButton = createBtn(lv_scr_act(), (lv_coord_t) 200, (lv_coord_t) 160, (lv_coord_t) 150, (lv_coord_t) 20, 0, "Toggle Mode");
+	lv_obj_t * modeButton = createBtn(lv_scr_act(),  200,  10, 150,  20, "Toggle Mode");
 	lv_style_t * modeBtnSty = createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 100, 0), LV_COLOR_MAKE(0, 125, 0), LV_COLOR_MAKE(0, 150, 150), LV_COLOR_MAKE(0, 150, 175), LV_COLOR_MAKE(0, 0, 0), LV_COLOR_MAKE(255, 255, 255));
 	setBtnStyle(modeBtnSty, modeButton);
 	lv_btn_set_action(modeButton, LV_BTN_ACTION_CLICK, toggleMode);
 
-	lv_obj_t * teamButton = createBtn(lv_scr_act(), (lv_coord_t) 200, (lv_coord_t) 200, (lv_coord_t) 150, (lv_coord_t) 20, 1, "Toggle Team");
+	lv_obj_t * teamButton = createBtn(lv_scr_act(), 200, 50,  150,  20, "Toggle Team");
 	lv_style_t * teamBtnSty = createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 0, 255), LV_COLOR_MAKE(0, 0, 125), LV_COLOR_MAKE(255, 0, 0), LV_COLOR_MAKE(125, 0, 0), LV_COLOR_MAKE(0, 0, 0), LV_COLOR_MAKE(255, 255, 255));
 	setBtnStyle(teamBtnSty, teamButton);
 	lv_btn_set_action(teamButton, LV_BTN_ACTION_CLICK, toggleTeam);
+	
+	lv_obj_t * odometryInfo = createLabel(lv_scr_act(), 200, 90, 150, 40, "Odom Info");
+
+	Odometry odom = Odometry(dt.fl_mtr,dt.bl_mtr,dt.fr_mtr,dt.br_mtr, odometryInfo);
+
+	dt.teleMove = [=]{dt.tankDrive(master.get_analog(E_CONTROLLER_ANALOG_LEFT_Y),master.get_analog(E_CONTROLLER_ANALOG_RIGHT_Y));};
 }
 
 /**
@@ -91,7 +96,7 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-	roll.rollerHalfStep(direction);
+	roll.rollerHalfStep();
 	delay(300);
 	dt.tankDrive(30, 30);
 }
@@ -110,14 +115,13 @@ void autonomous() {
  * task, not resume it from where it left off.
  */
 void opcontrol() {
-	dt.teleMove = [=]{dt.tankDrive(master.get_analog(E_CONTROLLER_ANALOG_LEFT_Y),master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y));};
 	while (true) {
 		dt.teleMove();
 
 		if (master.get_digital(E_CONTROLLER_DIGITAL_L1)) {roll.rollerHalfStep();}
 		if (master.get_digital(E_CONTROLLER_DIGITAL_L2)) {roll.rollerHalfStep(-1);}
 
-		if (master.get_digital(E_CONTROLLER_DIGITAL_R1)) {xtend.spoolXtend(1);}
+		if (master.get_digital(E_CONTROLLER_DIGITAL_R1)) {xtend.spoolXtend();}
 		if (master.get_digital(E_CONTROLLER_DIGITAL_R2)) {xtend.spoolXtend(-1);}
 
         delay(20);
