@@ -16,5 +16,6 @@ namespace Constants {
     static constexpr float wheelDiameter = 4.0f;
     static constexpr float trackwidth = 15.0f;
 
+    static constexpr unsigned short unitstoRevolution = 360;
     static constexpr unsigned char inchesToUnits = 2;
 };

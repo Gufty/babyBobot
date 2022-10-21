@@ -1,5 +1,8 @@
 #include "main.h"
-#include "Display.h"
+#include "display/lv_core/lv_obj.h"
+#include "display/lv_core/lv_style.h"
+#include "display/lv_objx/lv_label.h"
+#include "pros/rtos.hpp"
 #include "systems/DriveTrain.h"
 #include "systems/Roller.h"
 #include "systems/Extender.h"
@@ -49,19 +52,22 @@ void initialize() {
 	LV_IMG_DECLARE(normal);
 	lv_obj_t* backgroundImage = lv_img_disp(&normal);
 
-	lv_obj_t * modeButton = createBtn(lv_scr_act(),  200,  10, 150,  20, "Toggle Mode");
-	lv_style_t * modeBtnSty = createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 100, 0), LV_COLOR_MAKE(0, 125, 0), LV_COLOR_MAKE(0, 150, 150), LV_COLOR_MAKE(0, 150, 175), LV_COLOR_MAKE(0, 0, 0), LV_COLOR_MAKE(255, 255, 255));
+	lv_obj_t* modeButton = createBtn(lv_scr_act(),  200,  10, 150,  20, "Toggle Mode");
+	lv_style_t* modeBtnSty = createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 100, 0), LV_COLOR_MAKE(0, 125, 0), LV_COLOR_MAKE(0, 150, 150), LV_COLOR_MAKE(0, 150, 175), LV_COLOR_MAKE(255, 255, 255));
 	setBtnStyle(modeBtnSty, modeButton);
 	lv_btn_set_action(modeButton, LV_BTN_ACTION_CLICK, toggleMode);
 
-	lv_obj_t * teamButton = createBtn(lv_scr_act(), 200, 50,  150,  20, "Toggle Team");
-	lv_style_t * teamBtnSty = createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 0, 255), LV_COLOR_MAKE(0, 0, 125), LV_COLOR_MAKE(255, 0, 0), LV_COLOR_MAKE(125, 0, 0), LV_COLOR_MAKE(0, 0, 0), LV_COLOR_MAKE(255, 255, 255));
+	lv_obj_t* teamButton = createBtn(lv_scr_act(), 200, 50,  150,  20, "Toggle Team");
+	lv_style_t* teamBtnSty = createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 0, 255), LV_COLOR_MAKE(0, 0, 125), LV_COLOR_MAKE(255, 0, 0), LV_COLOR_MAKE(125, 0, 0), LV_COLOR_MAKE(255, 255, 255));
 	setBtnStyle(teamBtnSty, teamButton);
 	lv_btn_set_action(teamButton, LV_BTN_ACTION_CLICK, toggleTeam);
-	
-	lv_obj_t * odometryInfo = createLabel(lv_scr_act(), 200, 90, 150, 40, "Odom Info");
 
-	Odometry odom = Odometry(dt.fl_mtr,dt.bl_mtr,dt.fr_mtr,dt.br_mtr, odometryInfo);
+	lv_obj_t * odometryInfo = createLabel(lv_scr_act(), 200, 90, 150, 40, "Odom Info");
+	lv_style_t* textSty = createLabelSty(&lv_style_plain, LV_COLOR_MAKE(0,0,0), LV_COLOR_MAKE(255,255,255), LV_OPA_50);
+	lv_label_set_style(odometryInfo, textSty);
+
+	Odometry odom = Odometry(&dt.fl_mtr,&dt.bl_mtr,&dt.fr_mtr,&dt.br_mtr, &odometryInfo);
+	Task odomTask{odom.odomTick};
 
 	dt.teleMove = [=]{dt.tankDrive(master.get_analog(E_CONTROLLER_ANALOG_LEFT_Y),master.get_analog(E_CONTROLLER_ANALOG_RIGHT_Y));};
 }

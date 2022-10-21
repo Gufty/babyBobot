@@ -1,6 +1,4 @@
 #include "../include/display/lvgl.h"
-#include "display/lv_core/lv_obj.h"
-#include "display/lv_objx/lv_label.h"
 #include <cstdlib>
 
 namespace Display {
@@ -22,6 +20,17 @@ namespace Display {
 
         return label;
     }
+    static inline lv_style_t* createLabelSty(lv_style_t* copy, lv_color_t bgCol, lv_color_t textColor, unsigned char opa) {
+        lv_style_t* labelSty;
+        lv_style_copy(labelSty, copy);
+
+        labelSty[0].body.main_color = bgCol;
+        labelSty[0].body.grad_color = bgCol;
+        labelSty[0].body.opa = opa;
+        labelSty[0].text.color = textColor;
+
+        return labelSty;
+    }
     static inline lv_obj_t* createBtn(lv_obj_t* parent, lv_coord_t x, lv_coord_t y, lv_coord_t width, lv_coord_t height, const char* title)
     {
         lv_obj_t* btn = lv_btn_create(parent, NULL);
@@ -34,7 +43,7 @@ namespace Display {
 
         return btn;
     }
-    static inline lv_style_t* createBtnStyle(lv_style_t* copy, lv_color_t rel, lv_color_t pr, lv_color_t tglRel, lv_color_t tglPr, lv_color_t tglBorder, lv_color_t textColor)
+    static inline lv_style_t* createBtnStyle(lv_style_t* copy, lv_color_t rel, lv_color_t pr, lv_color_t tglRel, lv_color_t tglPr, lv_color_t textColor)
     {
         lv_style_t* btnStyle = (lv_style_t*)malloc(sizeof(lv_style_t)* 4);
 
@@ -50,14 +59,10 @@ namespace Display {
 
         btnStyle[2].body.main_color = tglRel;
         btnStyle[2].body.grad_color = tglRel;
-        btnStyle[2].body.border.width = 2;
-        btnStyle[2].body.border.color = tglBorder;
         btnStyle[2].text.color = textColor;
 
         btnStyle[3].body.main_color = tglPr;
         btnStyle[3].body.grad_color = tglPr;
-        btnStyle[3].body.border.width = 2;
-        btnStyle[3].body.border.color = tglBorder;
         btnStyle[3].text.color = textColor;
 
         return btnStyle;
