@@ -1,7 +1,8 @@
 #pragma once
 
 #include "pros/motors.hpp"
-#include "../Constants.h"
+#include "../Constants.hpp"
+
 using namespace Constants;
 using namespace pros;
 

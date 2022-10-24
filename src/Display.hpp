@@ -16,16 +16,14 @@ namespace Display {
         lv_obj_set_size(label, width, height);
         lv_label_set_text(label,title);
         lv_label_set_align(label, LV_LABEL_ALIGN_CENTER);
-        lv_obj_align(label, NULL, LV_ALIGN_IN_TOP_MID, 0, 5);
 
         return label;
     }
     static inline lv_style_t* createLabelSty(lv_style_t* copy, lv_color_t bgCol, lv_color_t textColor, unsigned char opa) {
         lv_style_t* labelSty;
-        lv_style_copy(labelSty, copy);
+        lv_style_copy(&labelSty[0], copy);
 
         labelSty[0].body.main_color = bgCol;
-        labelSty[0].body.grad_color = bgCol;
         labelSty[0].body.opa = opa;
         labelSty[0].text.color = textColor;
 
@@ -39,7 +37,7 @@ namespace Display {
 
         lv_obj_t* label = lv_label_create(btn, NULL);
         lv_label_set_text(label, title);
-        lv_obj_align(label, NULL, LV_ALIGN_IN_TOP_MID, 0, 5);
+        lv_obj_align(label, NULL, LV_ALIGN_IN_TOP_LEFT, 0, 0);
 
         return btn;
     }

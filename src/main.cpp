@@ -1,12 +1,8 @@
 #include "main.h"
-#include "display/lv_core/lv_obj.h"
-#include "display/lv_core/lv_style.h"
-#include "display/lv_objx/lv_label.h"
-#include "pros/rtos.hpp"
-#include "systems/DriveTrain.h"
-#include "systems/Roller.h"
-#include "systems/Extender.h"
-#include "autonomous/Odometry.h"
+#include "systems/DriveTrain.hpp"
+#include "systems/Roller.hpp"
+#include "systems/Extender.hpp"
+#include "autonomous/Odometry.hpp"
 
 
 using namespace pros;
@@ -18,32 +14,32 @@ DriveTrain dt = DriveTrain();
 Roller roll = Roller();
 Extender xtend = Extender();
 
-bool tank = true;
+bool arcade = false;
 
 inline lv_res_t toggleMode(lv_obj_t * btn)
 {
-    if (tank) {
-	dt.teleMove = [=]{dt.arcadeDrive(master.get_analog(E_CONTROLLER_ANALOG_LEFT_Y),master.get_analog(E_CONTROLLER_ANALOG_RIGHT_X));};
-    } else {
+    if (arcade) {
 	dt.teleMove = [=]{dt.tankDrive(master.get_analog(E_CONTROLLER_ANALOG_LEFT_Y),master.get_analog(E_CONTROLLER_ANALOG_RIGHT_Y));};
+    } else {
+	dt.teleMove = [=]{dt.arcadeDrive(master.get_analog(E_CONTROLLER_ANALOG_LEFT_Y),master.get_analog(E_CONTROLLER_ANALOG_RIGHT_X));};
     }
-	tank = !tank;
+	arcade = !arcade;
 
-	btnSetToggled(btn, tank);
+	btnSetToggled(btn, arcade);
 
     return LV_RES_OK;
 }
 
-bool blueTeam = true;
+bool redTeam = false;
 
 inline lv_res_t toggleTeam(lv_obj_t * btn) {
-	/*if (blueTeam) {
+	/*if (redTeam) {
 	} else {
 	}*/
 
-	blueTeam = !blueTeam;
+	redTeam = !redTeam;
 
-	btnSetToggled(btn, blueTeam);
+	btnSetToggled(btn, redTeam);
 
 	return LV_RES_OK;
 }
@@ -64,10 +60,10 @@ void initialize() {
 
 	lv_obj_t * odometryInfo = createLabel(lv_scr_act(), 200, 90, 150, 40, "Odom Info");
 	lv_style_t* textSty = createLabelSty(&lv_style_plain, LV_COLOR_MAKE(0,0,0), LV_COLOR_MAKE(255,255,255), LV_OPA_50);
-	lv_label_set_style(odometryInfo, textSty);
+	lv_label_set_style(odometryInfo, &textSty[0]);
 
-	Odometry odom = Odometry(&dt.fl_mtr,&dt.bl_mtr,&dt.fr_mtr,&dt.br_mtr, &odometryInfo);
-	Task odomTask{odom.odomTick};
+	Odometry odom = Odometry(&dt, &odometryInfo);
+	odom.followPath("/usd/path.dat");
 
 	dt.teleMove = [=]{dt.tankDrive(master.get_analog(E_CONTROLLER_ANALOG_LEFT_Y),master.get_analog(E_CONTROLLER_ANALOG_RIGHT_Y));};
 }
