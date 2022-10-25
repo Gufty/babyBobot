@@ -1,7 +1,6 @@
 #pragma once
 
-#include "../Constants.hpp"
-using namespace Constants;
+#include <cmath>
 
 struct Vector2{
     double x;
@@ -25,15 +24,14 @@ struct Vector2{
 		return {x / otherVector.x, y / otherVector.y};
 	}
 
-	inline float distanceTo(Vector2 otherVector) {
-		float dx = otherVector.x-x;
-		float dy = otherVector.y-y;
-		return f_sqrt((dx*dx)+(dy*dy));
+	inline double distanceTo(Vector2 otherVector) {
+		double dx = otherVector.x-x;
+		double dy = otherVector.y-y;
+		return sqrt((dx*dx)+(dy*dy));
 	}
 
-	inline float degreesTo(float currentHeading, Vector2 pointToFace) {
-		float dx = pointToFace.x - x;
-		float dy = pointToFace.y - y;
-		return f_atan(dy/dx);
+	inline double degreesTo(double currentHeading, Vector2 pointToFace) {
+		Vector2 dvec = (pointToFace-*this);
+		return std::atan2(dvec.y,dvec.x) - currentHeading;
 	}
 };

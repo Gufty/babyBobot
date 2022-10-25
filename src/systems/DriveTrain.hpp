@@ -15,15 +15,15 @@ struct DriveTrain {
 	Motor_Group left_g =  Motor_Group({fl_mtr,bl_mtr});
 	Motor_Group right_g = Motor_Group({fr_mtr,br_mtr});
 
-	Motor_Group all_g = Motor_Group({&left_g, &right_g});
-
 	std::function<void(void)> teleMove;
 
 	DriveTrain() {
-		all_g.set_brake_modes(E_MOTOR_BRAKE_HOLD);
-		all_g.tare_position();
-
+		left_g.set_brake_modes(E_MOTOR_BRAKE_HOLD);
+		right_g.set_brake_modes(E_MOTOR_BRAKE_HOLD);
 		left_g.set_reversed(true);
+		
+		left_g.tare_position();
+		right_g.tare_position();
 	}
 	inline void tankDrive(signed char leftY, signed char rightY){
 		left_g.move(abs(leftY)<threshold ? 0 :leftY);
@@ -36,13 +36,11 @@ struct DriveTrain {
 		right_g.move(leftY - rightX);
 	}
 	inline void moveForward(signed short inches) {
-		all_g.move_relative(inches*inchesToUnits,127);
+		left_g.move_relative(inches*inchesToUnits,127);
+		right_g.move_relative(inches*inchesToUnits,127);
     }
-	inline void turn(short degrees) {
-		char direction = degrees/(abs(degrees));
-		left_g.move(127*direction);
-		right_g.move(-127*direction);
-		delay(degrees);
-		all_g.move(0);
+	inline void turn(signed short degrees) {
+		left_g.move_relative(degrees, 127);
+		right_g.move_relative(-degrees, 127);
 	}
 };

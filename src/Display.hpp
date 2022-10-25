@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../include/display/lvgl.h"
 #include <cstdlib>
 

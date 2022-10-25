@@ -18,19 +18,4 @@ namespace Constants {
 
     static constexpr unsigned short unitstoRevolution = 360;
     static constexpr unsigned char inchesToUnits = 2;
-
-    static constexpr inline float f_sqrt(float n) {
-      float x = n;
-      float y = 1;
-      float e = 0.0001; // e decides the accuracy level
-      while (x - y > e) {
-        x = (x + y) / 2;
-        y = n / x;
-      }
-      return x;
-    }
-
-    static constexpr inline float f_atan(float n) {
-      return n*(45-15.66*(n-1)); // +- 0.22 degrees
-    }
 };

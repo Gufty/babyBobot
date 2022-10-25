@@ -14,7 +14,13 @@ DriveTrain dt = DriveTrain();
 Roller roll = Roller();
 Extender xtend = Extender();
 
-bool arcade = false;
+LV_IMG_DECLARE(normal);
+lv_obj_t* backgroundImage = lv_img_disp(&normal);
+
+lv_obj_t * odometryInfo = createLabel(lv_scr_act(), 150, 90, 150, 40, "Odom Info");
+Odometry odom = Odometry(&dt, &odometryInfo);
+
+bool arcade;
 
 inline lv_res_t toggleMode(lv_obj_t * btn)
 {
@@ -30,7 +36,7 @@ inline lv_res_t toggleMode(lv_obj_t * btn)
     return LV_RES_OK;
 }
 
-bool redTeam = false;
+bool redTeam;
 
 inline lv_res_t toggleTeam(lv_obj_t * btn) {
 	/*if (redTeam) {
@@ -45,8 +51,6 @@ inline lv_res_t toggleTeam(lv_obj_t * btn) {
 }
 
 void initialize() {
-	LV_IMG_DECLARE(normal);
-	lv_obj_t* backgroundImage = lv_img_disp(&normal);
 
 	lv_obj_t* modeButton = createBtn(lv_scr_act(),  200,  10, 150,  20, "Toggle Mode");
 	lv_style_t* modeBtnSty = createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 100, 0), LV_COLOR_MAKE(0, 125, 0), LV_COLOR_MAKE(0, 150, 150), LV_COLOR_MAKE(0, 150, 175), LV_COLOR_MAKE(255, 255, 255));
@@ -58,12 +62,8 @@ void initialize() {
 	setBtnStyle(teamBtnSty, teamButton);
 	lv_btn_set_action(teamButton, LV_BTN_ACTION_CLICK, toggleTeam);
 
-	lv_obj_t * odometryInfo = createLabel(lv_scr_act(), 200, 90, 150, 40, "Odom Info");
-	lv_style_t* textSty = createLabelSty(&lv_style_plain, LV_COLOR_MAKE(0,0,0), LV_COLOR_MAKE(255,255,255), LV_OPA_50);
-	lv_label_set_style(odometryInfo, &textSty[0]);
-
-	Odometry odom = Odometry(&dt, &odometryInfo);
-	odom.followPath("/usd/path.dat");
+	//lv_style_t* textSty = createLabelSty(&lv_style_plain, LV_COLOR_MAKE(0,0,0), LV_COLOR_MAKE(255,255,255), LV_OPA_50);
+	//lv_label_set_style(odometryInfo, &textSty[0]);
 
 	dt.teleMove = [=]{dt.tankDrive(master.get_analog(E_CONTROLLER_ANALOG_LEFT_Y),master.get_analog(E_CONTROLLER_ANALOG_RIGHT_Y));};
 }
@@ -126,6 +126,7 @@ void opcontrol() {
 		if (master.get_digital(E_CONTROLLER_DIGITAL_R1)) {xtend.spoolXtend();}
 		if (master.get_digital(E_CONTROLLER_DIGITAL_R2)) {xtend.spoolXtend(-1);}
 
+		
         delay(20);
     }
 }
