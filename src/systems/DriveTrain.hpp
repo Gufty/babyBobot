@@ -70,8 +70,8 @@ struct DriveTrain {
       prevError = error;
       speed = (kP * error) + (kI * integral) + (kD * derivative);
 
-      left.move_voltage(speed);
-      right.move_voltage(speed);
+      left_g.move_voltage(speed);
+      right_g.move_voltage(speed);
     }
   }
 }
