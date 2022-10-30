@@ -35,7 +35,7 @@ struct DriveTrain {
     left_g.move(leftY + rightX);
     right_g.move(leftY - rightX);
   }
-  inline void moveForward(signed short distance) {
+  inline void moveForward(signed float distance) {
     float ValueLeft = left_g.get_position()[0];
     float ValueRight = right_g.get_position()[0];
 
