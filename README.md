@@ -7,7 +7,7 @@
 - [x] Extender
 #
 ## Autonomous stuff
-- [ ] Odometry (with tracker wheels)
+- [x] Odometry (w/o tracker wheels)
 - [ ] Path class
 - [ ] Distance
 - [ ] Move to point (x,y)

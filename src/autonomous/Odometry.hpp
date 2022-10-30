@@ -6,9 +6,6 @@
 #include "../systems/DriveTrain.hpp"
 #include "Vector2.hpp"
 #include "Path.hpp"
-#include "pros/optical.h"
-#include "pros/rtos.hpp"
-#include <functional>
 
 using namespace Constants;
 using namespace Display;
@@ -20,40 +17,53 @@ class Odometry {
 	private:
 		DriveTrain* dt;
 		lv_obj_t** odometryInfo;
+		
 		Path p;
+		
+		double newLeft, newRight;
+		double phi;
+		double dLeft, dRight, rCenter;
+		double hCos, hSin, pCos, pSin;
 
 	public:
 		Vector2 pos = {0,0};
-		double heading = 0.0;
-		double leftEncoder = 0.0;
-		double rightEncoder = 0.0;
-		
-		double newLeft, newRight;
-		double deltaLeft, deltaRight, deltaCenter;
-		double phi;
-		double deltaPerp;
+		double heading = pi/4;
+		double leftEncoder, rightEncoder;
 
 		void odomTick(){
 			while(true) {
-			newLeft = ((*dt).fl_mtr.get_position() + (*dt).bl_mtr.get_position()) / 2;
-			newRight = ((*dt).fr_mtr.get_position() + (*dt).br_mtr.get_position()) / 2;
-
-			deltaLeft = newLeft - leftEncoder;
-			deltaRight = newRight - rightEncoder;
-			deltaCenter = (deltaLeft + deltaRight) / 2;
-
-			phi = (deltaLeft - deltaRight) / (trackwidth * inchesToUnits);
-			deltaPerp = deltaCenter * phi;
+			newLeft = ((*dt).fl_mtr.get_position() + (*dt).bl_mtr.get_position()) / 2 * inchesPerTick;
+			newRight = ((*dt).fr_mtr.get_position() + (*dt).br_mtr.get_position()) / 2 * inchesPerTick;
 			
-			pos.x += (deltaCenter * cos(heading) - deltaPerp * sin(heading))/inchesToUnits;
-			pos.y += (deltaCenter * sin(heading) + deltaPerp * cos(heading))/inchesToUnits;
-			heading += phi;
+			dLeft = newLeft - leftEncoder;
+			dRight = newRight - rightEncoder;
+
+			phi = (dRight-dLeft)/trackwidth;
+
+			if (phi == 0) {
+				pos.x += dLeft*cos(heading);
+				pos.y += dLeft*sin(heading);
+			} else {
+				rCenter = ((dLeft+dRight)/2)/phi;
+
+				hCos = cos(heading); hSin = sin(heading);
+				pCos = cos(phi); pSin = sin(phi);
+
+				pos.x += (rCenter)*(-hSin + pSin*hCos + hSin*pCos);
+				pos.y += (rCenter)*(hCos - pCos*hCos + hSin*pSin);
+			}
+			heading+=phi;
+
+			if (heading <= 0) heading += pi*2;
+			heading = fmod(std::abs(heading),pi*2);
+
+			std::cout << pos.x << " " << pos.y << " " << heading*radToDeg << " " << phi*radToDeg << std::endl;
 
 			leftEncoder = newLeft;
 			rightEncoder = newRight;
 
 #ifdef ODOM_DEBUG
-			lv_label_set_text(*odometryInfo, ("Position: (" + std::to_string(pos.x) + ", " + std::to_string(pos.y) + ") \nTheta: " + std::to_string(heading)).c_str());
+			lv_label_set_text(*odometryInfo, ("Position: (" + std::to_string(pos.x) + ", " + std::to_string(pos.y) + ") \nTheta: " + std::to_string(heading*radToDeg)).c_str());
 #endif
 			delay(10);
 			}
@@ -93,9 +103,7 @@ class Odometry {
 			p = Path(points, n);
 		}
 
-		inline void followPath(const char* path2path){
-			loadPath(path2path);
-
+		inline void followPath(){
 			(*dt).turn(p.angles[0]-heading);
 			(*dt).moveForward(pos.distanceTo(p.points[0]));
 

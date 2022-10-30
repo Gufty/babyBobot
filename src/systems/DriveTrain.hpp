@@ -36,8 +36,8 @@ struct DriveTrain {
 		right_g.move(leftY - rightX);
 	}
 	inline void moveForward(signed short inches) {
-		left_g.move_relative(inches*inchesToUnits,127);
-		right_g.move_relative(inches*inchesToUnits,127);
+		left_g.move_relative(inches*inchesPerTick,127);
+		right_g.move_relative(inches*inchesPerTick,127);
     }
 	inline void turn(signed short degrees) {
 		left_g.move_relative(degrees, 127);
