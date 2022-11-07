@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cmath>
+#include "../Constants.hpp"
+using namespace Constants;
 
 struct Vector2{
     double x;
@@ -30,7 +32,7 @@ struct Vector2{
 		return sqrt((dx*dx)+(dy*dy));
 	}
 
-	inline double degreesTo(double currentHeading, Vector2 pointToFace) {
+	inline double headingTo(double currentHeading, Vector2 pointToFace) {
 		Vector2 dvec = (pointToFace-*this);
 		return std::atan2(dvec.y,dvec.x) - currentHeading;
 	}

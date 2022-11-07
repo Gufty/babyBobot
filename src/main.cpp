@@ -1,8 +1,10 @@
 #include "main.h"
+#include "pros/rtos.hpp"
 #include "systems/DriveTrain.hpp"
 #include "systems/Roller.hpp"
 #include "systems/Extender.hpp"
 #include "autonomous/Odometry.hpp"
+#include <sys/_types.h>
 
 
 using namespace pros;
@@ -36,16 +38,12 @@ inline lv_res_t toggleMode(lv_obj_t * btn)
     return LV_RES_OK;
 }
 
-bool redTeam;
+bool rightSide;
 
-inline lv_res_t toggleTeam(lv_obj_t * btn) {
-	/*if (redTeam) {
-	} else {
-	}*/
+inline lv_res_t toggleSide(lv_obj_t * btn) {
+	rightSide = !rightSide;
 
-	redTeam = !redTeam;
-
-	btnSetToggled(btn, redTeam);
+	btnSetToggled(btn, rightSide);
 
 	return LV_RES_OK;
 }
@@ -57,10 +55,10 @@ void initialize() {
 	setBtnStyle(modeBtnSty, modeButton);
 	lv_btn_set_action(modeButton, LV_BTN_ACTION_CLICK, toggleMode);
 
-	lv_obj_t* teamButton = createBtn(lv_scr_act(), 200, 50,  150,  20, "Toggle Team");
+	lv_obj_t* teamButton = createBtn(lv_scr_act(), 200, 50,  150,  20, "Toggle Side");
 	lv_style_t* teamBtnSty = createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 0, 255), LV_COLOR_MAKE(0, 0, 125), LV_COLOR_MAKE(255, 0, 0), LV_COLOR_MAKE(125, 0, 0), LV_COLOR_MAKE(255, 255, 255));
 	setBtnStyle(teamBtnSty, teamButton);
-	lv_btn_set_action(teamButton, LV_BTN_ACTION_CLICK, toggleTeam);
+	lv_btn_set_action(teamButton, LV_BTN_ACTION_CLICK, toggleSide);
 
 	//lv_style_t* textSty = createLabelSty(&lv_style_plain, LV_COLOR_MAKE(0,0,0), LV_COLOR_MAKE(255,255,255), LV_OPA_50);
 	//lv_label_set_style(odometryInfo, &textSty[0]);
@@ -97,7 +95,22 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void autonomous() {}
+void autonomous() {
+	//odom.loadPath("/usd/points.dat", "/usd/distances.dat");
+	//odom.followPath();
+	if (rightSide) {
+		odom.followPath();
+		roll.move(-127);
+		delay(3000);
+		roll.move(0);
+	}else {
+		dt.tankDrive(-69, -69);
+		roll.move(-127);
+		delay(3000);
+		dt.tankDrive(0, 0);
+		roll.move(0);
+	}
+}
 
 /**
  * Runs the operator control code. This function will be started in its own task
@@ -113,14 +126,18 @@ void autonomous() {}
  * task, not resume it from where it left off.
  */
 void opcontrol() {
+	unsigned int startTime = pros::millis();
 	while (true) {
 		dt.teleMove();
 
-		if (master.get_digital(E_CONTROLLER_DIGITAL_L1)) {roll.rollerHalfStep();}
-		if (master.get_digital(E_CONTROLLER_DIGITAL_L2)) {roll.rollerHalfStep(-1);}
+		if (master.get_digital(E_CONTROLLER_DIGITAL_L1)) {roll.move(127);}
+		else if (master.get_digital(E_CONTROLLER_DIGITAL_L2)) {roll.move(-127);}
+		else {roll.move(0);}
 
-		if (master.get_digital(E_CONTROLLER_DIGITAL_R1)) {xtend.spoolXtend();}
-		if (master.get_digital(E_CONTROLLER_DIGITAL_R2)) {xtend.spoolXtend(-1);}
+		if(pros::millis()-startTime >= 90000){
+			if (master.get_digital(E_CONTROLLER_DIGITAL_R1)) {xtend.crossXtend();}
+			if (master.get_digital(E_CONTROLLER_DIGITAL_R2)) {xtend.crossXtend(-1);}
+		}
 		
         delay(20);
     }

@@ -6,6 +6,9 @@
 #include "../systems/DriveTrain.hpp"
 #include "Vector2.hpp"
 #include "Path.hpp"
+#include "pros/rtos.hpp"
+#include <cstdio>
+#include <sys/_intsup.h>
 
 using namespace Constants;
 using namespace Display;
@@ -18,7 +21,9 @@ class Odometry {
 		DriveTrain* dt;
 		lv_obj_t** odometryInfo;
 		
-		Path p;
+		Vector2 points[2] = {{0,48},{48,48}};
+		double distances[1] = {24};
+		Path p = Path(points,distances,2);
 		
 		double newLeft, newRight;
 		double phi;
@@ -27,13 +32,13 @@ class Odometry {
 
 	public:
 		Vector2 pos = {0,0};
-		double heading = pi/4;
+		double heading = pi/2;
 		double leftEncoder, rightEncoder;
 
 		void odomTick(){
 			while(true) {
-			newLeft = ((*dt).fl_mtr.get_position() + (*dt).bl_mtr.get_position()) / 2 * inchesPerTick;
-			newRight = ((*dt).fr_mtr.get_position() + (*dt).br_mtr.get_position()) / 2 * inchesPerTick;
+			newLeft = (dt->fl_mtr.get_position() + dt->bl_mtr.get_position()) / 2 * inchesPerTick;
+			newRight = (dt->fr_mtr.get_position() + dt->br_mtr.get_position()) / 2 * inchesPerTick;
 			
 			dLeft = newLeft - leftEncoder;
 			dRight = newRight - rightEncoder;
@@ -54,10 +59,9 @@ class Odometry {
 			}
 			heading+=phi;
 
-			if (heading <= 0) heading += pi*2;
-			heading = fmod(std::abs(heading),pi*2);
+			heading = headingRestrict(heading);
 
-			std::cout << pos.x << " " << pos.y << " " << heading*radToDeg << " " << phi*radToDeg << std::endl;
+			//std::cout << pos.x << " " << pos.y << " " << heading*radToDeg << " " << phi*radToDeg << std::endl;
 
 			leftEncoder = newLeft;
 			rightEncoder = newRight;
@@ -68,48 +72,134 @@ class Odometry {
 			delay(10);
 			}
 		};
+
         Odometry(DriveTrain* dt, lv_obj_t** odometryInfo):dt(dt), odometryInfo(odometryInfo){}
 		Task odomTask{std::bind(&Odometry::odomTick, this)};
 
-		inline void loadPath(const char* path2path) {
+		inline void loadPath(const char* path2points, const char* path2dists) {
 			unsigned short n = 1;
-			FILE* usd_file_read = fopen(path2path, "r");
+			FILE* points_read = fopen(path2points, "r");
 
-			if (usd_file_read == NULL)
+			if (points_read == NULL)
 			{
 				printf("File not found.");
 				throw "NERD";
 			}
 			short newlines;
-			while( (newlines = fgetc(usd_file_read)) != EOF)
+			while( (newlines = fgetc(points_read)) != EOF)
 			{if (newlines == 10){n++;}}
 
-			rewind(usd_file_read);
+			rewind(points_read);
 			
-			double x[n];
-			double y[n];
-
-			for (unsigned short i = 0; i < n; i++) {
-				fscanf(usd_file_read, "%lf,%lf ", &x[i], &y[i]);
-			}
-			fclose(usd_file_read);
-
 			Vector2 points[n];
 
-			for(unsigned short i = 0; i < n; i++){
-				points[i] = {x[i], y[i]};
+			for (unsigned short i = 0; i < n; i++) {
+				fscanf(points_read, "%lf,%lf ", &points[i].x, &points[i].y);
+			}
+			fclose(points_read);
+
+			FILE* dists_read = fopen(path2dists, "r");
+
+			double arcDists[n-1];
+			for (unsigned short i = 0; i < n-1; i++) {
+				fscanf(dists_read, "%lf", &arcDists[i]);
 			}
 
-			p = Path(points, n);
+			fclose(dists_read);
+
+			p = Path(points, arcDists, n);
 		}
+		inline void moveDist(double distanceL, double distanceR) {
+			float ValueLeft = leftEncoder;
+			float ValueRight = rightEncoder;
 
-		inline void followPath(){
-			(*dt).turn(p.angles[0]-heading);
-			(*dt).moveForward(pos.distanceTo(p.points[0]));
+			float deltaLeft, deltaRight;
 
-			for (unsigned short i = 1; i < p.n-1; i++) {
-				(*dt).turn(p.angles[i]);
-				(*dt).moveForward(p.distances[i-1]);
+			const double kP = 8.7;
+			const double kI = 0.0;
+			const double kD = 0.0;
+
+			float lIntegral, lPrevIntegral;
+			float lDerivative;
+			float lError, lPrevError;
+			float lSpeed;
+
+			float rIntegral, rPrevIntegral;
+			float rDerivative;
+			float rError, rPrevError;
+			float rSpeed;
+
+			unsigned char iterationTime = 20;
+
+			while (true) {
+				deltaLeft = leftEncoder - ValueLeft;
+				deltaRight = rightEncoder - ValueRight;
+
+				lError = distanceL - deltaLeft;
+				rError = distanceR - deltaRight;
+
+				if(fabs(lError) < 0.1 && fabs(rError) < 0.1){break;}
+
+				lIntegral = lPrevIntegral + lError * iterationTime;
+				rIntegral = rPrevIntegral + rError * iterationTime;
+
+				lDerivative = (lError - lPrevError)/iterationTime;
+				rDerivative = (rError - rPrevError)/iterationTime;
+
+				lSpeed = (kP * lError) + (kI * lIntegral) + (kD * lDerivative);
+				rSpeed = (kP * rError) + (kI * rIntegral) + (kD * rDerivative);
+
+				dt->left_g.move(lSpeed);
+				dt->right_g.move(rSpeed);
+
+				lPrevError = lError;
+				rPrevError = rError;
+
+				lPrevIntegral = lIntegral;
+				rPrevIntegral = rIntegral;
+
+				delay(iterationTime);
 			}
+			float InitialHeading = heading;
+		}
+		inline void followPath(){
+			float time = 0.0;
+			Vector2 target;
+
+			double pathDist;
+
+			double distance;
+			double deltaTime;
+			double direction;
+			while (true) {
+				pathDist = p.timeToDis(time, 0.1, -0.1); 
+				if (pathDist>=p.totalDistance){break;}
+				target = p.distToPos(pathDist);
+
+				distance = trackwidth*pos.headingTo(heading, target)/pi;
+				deltaTime = fabs(distance)/maxActVel;
+				direction = (distance<0) ? -1 : 1;
+
+				std::cout << distance << " " << deltaTime << std::endl;
+
+				dt->left_g.move_velocity(direction*-maxIdealVel);
+				dt->right_g.move_velocity(direction*maxIdealVel);
+
+				time += deltaTime;
+				delay(deltaTime/10);
+
+				distance = pos.distanceTo(target);
+				deltaTime = fabs(distance)/maxActVel;
+				direction = (distance<0) ? -1 : 1;
+
+				std::cout << distance << " " << deltaTime << std::endl;
+
+				dt->left_g.move_velocity(direction*maxIdealVel);
+				dt->right_g.move_velocity(direction*maxIdealVel);
+				
+				time += deltaTime;
+				delay(deltaTime/10);
+			}
+			dt->tankDrive(0,0);
 		}
 };
