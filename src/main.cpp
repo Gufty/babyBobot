@@ -103,7 +103,7 @@ void autonomous() {
 		roll.move(-127);
 		delay(3000);
 		roll.move(0);
-	}else {
+	} else {
 		dt.tankDrive(-69, -69);
 		roll.move(-127);
 		delay(3000);

@@ -24,52 +24,52 @@ class Path {
     private:
         inline void returnAngles() {
             float phi, theta = 0;
-            angles = (double*)malloc(sizeof(double)*(n));
-            for(unsigned short i = 1; i < n; i++) { 
-                phi = pPoints[i-1].headingTo(theta, pPoints[i]);
-                angles[i-1] = headingRestrict(phi);
+            angles = (double*)malloc(sizeof(double)*(n-1));
+            for(unsigned short i = 0; i < n-1; i++) {
+                phi = pPoints[i].headingTo(theta, pPoints[i+1]);
+                angles[i] = headingRestrict(phi);
                 theta += phi;
             }
             angles[n-1]=pi/2; 
         }
         inline void createPath() {
             lines = (Line*)malloc(sizeof(Line)*(n-1));
-            arcs = (Arc*)malloc(sizeof(Arc)*(n-1));
+            arcs = (Arc*)malloc(sizeof(Arc)*(n-2));
             Vector2 temp1; Vector2 temp2;
-            for (unsigned short i = 1; i < n; i++) {
-                unsigned short v = i-1;
+            for (unsigned short i = 0; i < n-1; i+=2) {
+                unsigned short v = i/2;
+                unsigned short h = v+1;
 
-                temp1.x = pPoints[i].x - cos(angles[v])*arcDists[v];
-                temp1.y = pPoints[i].y - sin(angles[v])*arcDists[v];
+                temp1.x = pPoints[h].x - cos(angles[v])*arcDists[v];
+                temp1.y = pPoints[h].y - sin(angles[v])*arcDists[v];
 
-                temp2.x = pPoints[i].x + cos(angles[i])*arcDists[v];
-                temp2.y = pPoints[i].y + sin(angles[i])*arcDists[v];
+                temp2.x = pPoints[h].x + cos(angles[h])*arcDists[v];
+                temp2.y = pPoints[h].y + sin(angles[h])*arcDists[v];
 
-                if (v%2==0) {
-                    lines[v] = Line(pPoints[v], temp1);
-                    lines[i] = Line(temp2, pPoints[i]);
-                }
+                lines[v+v] = Line(pPoints[v], temp1);
+                lines[h+v] = Line(temp2, pPoints[v+2]);
 
-                arcs[v] = Arc(temp1, pPoints[i], temp2);
+                arcs[v] = Arc(temp1, pPoints[h], temp2);
             }
         }
         inline void returnDistances(){
-            distances = (double*)malloc(sizeof(double)*(n));
-            for (unsigned short i = 0; i < n; i++) {
+            distances = (double*)malloc(sizeof(double)*(n-1));
+            for (unsigned short i = 0; i < n-1; i++) {
                 distances[i]=lines[i].disBtwnCords;
             }
         } 
         inline void returnArcLengths(){
-            arcLengths = (double*)malloc(sizeof(double)*(n-1));
-            for (unsigned short i = 0; i < n-1; i++) {
+            arcLengths = (double*)malloc(sizeof(double)*(n-2));
+            for (unsigned short i = 0; i < n-2; i++) {
                 arcLengths[i] = arcs[i].arcL;
-                std::cout << arcLengths[i] << std::endl;
             }
         }
         inline void calculateTotalDistance() {
             for(unsigned short i = 0; i < n-1; i++){
                 totalDistance += distances[i];
-                //totalDistance += arcLengths[i];
+            }
+            for(unsigned short i = 0; i < n-2; i++){
+                totalDistance += arcLengths[i];
             }
         }
         /*
