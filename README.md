@@ -8,7 +8,7 @@
 #
 ## Autonomous stuff
 - [x] Odometry (w/o tracker wheels)
-- [ ] Path class
-- [ ] Distance
-- [ ] Move to point (x,y)
-- [ ] Pure pursuit
+- [x] Path class
+- [x] Distance
+- [x] Move to point (x,y)
+- [x] Pure pursuit
