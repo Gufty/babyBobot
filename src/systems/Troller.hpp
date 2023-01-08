@@ -6,11 +6,11 @@
 using namespace pros;
 using namespace Constants;
 
-class Roller {
+class Troller {
     private:
-        Motor roller = Motor(roller_p);
+        Motor roller = Motor(troller_p);
     public:
-        Roller() {
+        Troller() {
             roller.set_brake_mode(E_MOTOR_BRAKE_HOLD);
         }
         inline void halfStep(signed char direction = 1) {

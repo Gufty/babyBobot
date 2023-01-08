@@ -1,164 +1,187 @@
 #pragma once
 
-#include "Vector2.hpp"
 #include "../Constants.hpp"
-#include "Arc.hpp"
 #include "Line.hpp"
-#include <cmath>
+#include "Vector2.hpp"
 #include <cstdlib>
-using namespace Constants;
+#include <math.h>
 
 class Path {
-    public:
+    private:
         Vector2* pPoints;
-        double* arcDists;
         unsigned short n;
 
-        double* angles;
-        double* distances;
-        double* arcLengths;
-        double totalDistance;
-
+        Vector2* nPoints;
         Line* lines;
-        Arc* arcs;
-    private:
-        inline void returnAngles() {
-            float phi, theta = 0;
-            angles = (double*)malloc(sizeof(double)*(n-1));
-            for(unsigned short i = 0; i < n-1; i++) {
-                phi = pPoints[i].headingTo(theta, pPoints[i+1]);
-                angles[i] = headingRestrict(phi);
-                theta += phi;
-            }
-            angles[n-1]=pi/2; 
-        }
-        inline void createPath() {
+
+        double* distAtPoint;
+        double* headingAtPoint;
+        
+        Vector2* sPoints;
+
+        double* radius;
+        double* curvature;
+        double* oVel;
+        double* nVel;
+        double* vel = new double[2];
+
+        static constexpr double k = 5;
+        static constexpr double deltaTime = 0.005;
+        static constexpr double maxRate = 5;
+        static constexpr double maxChange = deltaTime*maxRate;
+        static constexpr double lookaheadRadius = 15;
+
+        double rateOutput;
+        unsigned short currentSegment = 0;
+        Vector2 lookaheadPoint;
+
+        void createPath() {
+            unsigned int pNum = 0;
+            unsigned int pNumL[n-1];
             lines = (Line*)malloc(sizeof(Line)*(n-1));
-            arcs = (Arc*)malloc(sizeof(Arc)*(n-2));
-            Vector2 temp1; Vector2 temp2;
-            for (unsigned short i = 0; i < n-1; i+=2) {
-                unsigned short v = i/2;
-                unsigned short h = v+1;
-
-                temp1.x = pPoints[h].x - cos(angles[v])*arcDists[v];
-                temp1.y = pPoints[h].y - sin(angles[v])*arcDists[v];
-
-                temp2.x = pPoints[h].x + cos(angles[h])*arcDists[v];
-                temp2.y = pPoints[h].y + sin(angles[h])*arcDists[v];
-
-                lines[v+v] = Line(pPoints[v], temp1);
-                lines[h+v] = Line(temp2, pPoints[v+2]);
-
-                arcs[v] = Arc(temp1, pPoints[h], temp2);
-            }
-        }
-        inline void returnDistances(){
-            distances = (double*)malloc(sizeof(double)*(n-1));
             for (unsigned short i = 0; i < n-1; i++) {
-                distances[i]=lines[i].disBtwnCords;
+                lines[i] = Line(pPoints[i], pPoints[i+1]);
+                pNumL[i] = lines[i].disBtwnCords/spacing;
+                pNum += pNumL[i];
             }
-        } 
-        inline void returnArcLengths(){
-            arcLengths = (double*)malloc(sizeof(double)*(n-2));
-            for (unsigned short i = 0; i < n-2; i++) {
-                arcLengths[i] = arcs[i].arcL;
-            }
-        }
-        inline void calculateTotalDistance() {
-            for(unsigned short i = 0; i < n-1; i++){
-                totalDistance += distances[i];
-            }
-            for(unsigned short i = 0; i < n-2; i++){
-                totalDistance += arcLengths[i];
-            }
-        }
-        /*
-        inline float calculateUnmodifiedTime() {
-            //time to go from one point to another
-            return totalDistance/maxForwVel + totalAngles/maxTurnVel;
-        }
-        inline Vector2* arcDistancesFromTime(float targetTime) {
-            float timeToCut = targetTime-calculateUnmodifiedTime();
-            Vector2* arcDists = (Vector2*)malloc(sizeof(Vector2)*n-2);
 
-            if (timeToCut < 0) {
-                for (unsigned short i; i < n-1; i++) {
-                    arcDists[i] = {0,0};
+            nPoints = (Vector2*)malloc(sizeof(Vector2)*(pNum+1));
+            pNum = 0;
+
+            for (unsigned short i = 0; i < n-1; i++) {
+                for (unsigned int v = 0; v < pNumL[i]; v++) {
+                    //Point injection given spacing
+                    nPoints[pNum+v] = lines[i].ratioToCoordinate(((double)v)/pNumL[i]);
                 }
-                return arcDists;
+                pNum += pNumL[i];
             }
 
-            unsigned int mod;
-            double absPhi;
-            float temp = timeToCut;
-
-            while(temp<0) {
-                temp=timeToCut;
-                mod++;
-                for(unsigned short i = 0; i < n-1; i++) {
-                    absPhi = fmod(fabs((angles[i]<=0)?angles[i]+pi*2:angles[i]),pi*2);
-                    if (angles[i]<0){
-                        arcDists[i].x=(mod+trackwidth/2)*absPhi;
-                        arcDists[i].y=(mod-trackwidth/2)*absPhi;
-                    } else {
-                        arcDists[i].y=(mod+trackwidth/2)*absPhi;
-                        arcDists[i].x=(mod-trackwidth/2)*absPhi;
-                    }
-                    temp-=arcDists[i].x/maxForwVel;
-                }
-            }
-            return arcDists;
-        }*/
-    public:
-        Path(Vector2* pPoints, double* arcDists, unsigned short n): pPoints(pPoints), arcDists(arcDists), n(n) {
-            returnAngles();
-            createPath();
-            returnDistances();
-            returnArcLengths();
-            calculateTotalDistance();
-        }
-        inline double timeToDis(double t, double a1, double a2) {
-            double dt1 = maxActVel / a1;
-            double dt3 = fabs(maxActVel / a2);
-            double dd1 = maxActVel * dt1 * .5;
-            double dd3 = maxActVel * dt3 * .5;
-            double dd2 = totalDistance - dd1 - dd3;
-            double dt2 = dd2/maxActVel;
+            nPoints[pNum] = lines[n-2].endPos;
+            n=pNum;
+                
+            nPoints = smoother(nPoints, 1, 1, 100);
             
-            if (t >= dt3 + dt2 + dt1)
-            return totalDistance;
-            else if (t > dt2 + dt1){
-            double time = t - dt2 - dt1;
-            return dd1 + dd2 + (.5*time*((2*maxActVel) +(a2 *time)));
+            free(lines);
+            lines = (Line*)malloc(sizeof(Line)*(n-1));
+            distAtPoint = new double[n-1];
+            headingAtPoint = new double[n-1];
+            radius = new double[n-3];
+            curvature = new double[n-3];
+            oVel = new double[n-3];
+            nVel = new double[n-3];
+
+            unsigned short v,h;
+            double k1,k2,a,b;
+            double x1,x2,xx2,x3,y1,y2,yy2,y3;
+
+            for (unsigned short i = 0; i < n-1; i++) {
+                lines[i] = Line(nPoints[i], nPoints[i+1]);
+                distAtPoint[i] = ((i==0) ? 0 : distAtPoint[i-1]) + lines[i].disBtwnCords;
+                headingAtPoint[i] = (i==0) ? 0 : headingAtPoint[i-1] + nPoints[i].headingTo(headingAtPoint[i-1], nPoints[i+1]);
+                if (i<n-3) {
+                    v=i+1; h=v+1;
+
+                    x1=nPoints[i].x; x2=nPoints[v].x; x3 = nPoints[h].x;
+                    y1=nPoints[i].y; y2=nPoints[v].y; y3 = nPoints[h].y;
+                    xx2 = x2*x2; yy2= y2*y2;
+                    
+                    k1 = 0.5 * (x1*x1 + y1*y1 - xx2 - yy2) * (x1 - x2);
+                    k2 = (y1-y2)/(x1-x2);
+                    b = 0.5 * (xx2 - 2*x2*k1 + yy2 - x3*x3 + 2*x3*k1 -
+                        y3*y3) / (x3*k2 - y3 + y2 - x2*k2);
+                    a = k1 - k2*b;
+
+                    radius[i] = nPoints[i].distanceTo(Vector2(a,b));
+                    curvature[i]=1/radius[i];
+                    
+                    oVel[i]=fmin(maxRelVel, k/curvature[i]);
+                }
             }
-            else if (t == dt2 + dt1)
-            return dd1 + dd2;
-            else if (t > dt1)
-            return dd1 + (maxActVel * (t - dt1));
-            else if (t == dt1)
-            return dd1;
-            return .5 * a1 * pow(t, 2);
+            for (unsigned short i = 0; i < n-4; i++) {
+                nVel[i]=fmin(oVel[i], sqrt(oVel[i+1]*oVel[i+1] + 2*accel*lines[i].disBtwnCords));
+            }
+            nVel[n-4]=oVel[n-4];
+            lookaheadPoint = nPoints[0];
         }
-        inline Vector2 distToPos(double distance) {
-            Vector2 posAtTime;
-            for (unsigned short i = 1; i <= 2*n; i++){
-                unsigned short v = i-1;
-                if (i%2==0) {
-                    if (distance > arcs[v].arcL){
-                        distance -= arcs[v].arcL;
-                    } else {
-                        posAtTime = arcs[v].distanceToCoordinate(distance);
-                        break;
-                    }
-                } else {
-                    if (distance > distances[v]) {
-                        distance -= distances[v];
-                    } else {
-                        posAtTime = lines[v].distanceToCoordinate(distance);
+
+        Vector2* smoother(Vector2* path, double a, double b, double tolerance) {
+            sPoints = path;
+            double change = tolerance;
+            while(change >= tolerance) {
+                change = 0.0;
+                for(unsigned short i=1; i<n-1; i++) {
+                    double aux = sPoints[i].x;
+                    double auy = sPoints[i].y;
+                    sPoints[i] = sPoints[i] + Vector2(a * (nPoints[i].x - 
+                        sPoints[i].x) + b * (sPoints[i-1].x + sPoints[i+1].x -
+                        (2.0 * sPoints[i].x)),
+                        a * (nPoints[i].y - sPoints[i].y) + b * (sPoints[i-1].y +
+                        sPoints[i+1].y - (2.0 * sPoints[i].y)));
+                    change += fabs(aux - sPoints[i].x);
+                }
+            }
+            return sPoints;
+        }
+        
+        double rateLimiter(double input) {
+            rateOutput += constrain(input-rateOutput, -maxChange, maxChange);
+            return rateOutput;
+        }
+
+        void findTargetPoint(Vector2 pos) {
+            for (;currentSegment<n-1;currentSegment++) {
+                Vector2 f = lines[currentSegment].startPos - pos;
+                Vector2 d = lines[currentSegment].dvec;
+                double a = d.dotProduct(d);
+                double b = 2 * f.dotProduct(d);
+                double c = f.dotProduct(f) - lookaheadRadius*lookaheadRadius;
+                double discriminant = b*b - 4*a*c;
+                if (discriminant > 0) {
+                    discriminant = sqrtf(discriminant);
+                    double t1 = (-b-discriminant)/(2*a);
+                    double t2 = (-b+discriminant)/(2*a);
+                    if (0 <= t1 && t1 <= 1) {
+                        if (0 <= t2 && t2 <= 1) {
+                            lookaheadPoint = (t1 > t2) ? lines[currentSegment].ratioToCoordinate(t1) : lines[currentSegment].ratioToCoordinate(t2);
+                            break;
+                        } else {
+                            lookaheadPoint = lines[currentSegment].ratioToCoordinate(t1);
+                            break;
+                        } 
+                    } else if (0 <= t2 && t2 <= 1) {
+                        lookaheadPoint = lines[currentSegment].ratioToCoordinate(t2);
                         break;
                     }
                 }
             }
-            return posAtTime;
+        }
+
+        
+    public:
+        Path(Vector2* pPoints, unsigned short n):pPoints(pPoints),n(n){
+            createPath();
+        };
+        ~Path(){
+            free(nPoints);
+            free(lines);
+            delete[] distAtPoint;
+            delete[] headingAtPoint;
+            delete[] radius;
+            delete[] curvature;
+            delete[] oVel;
+            delete[] nVel;
+            delete[] vel;
+        }
+
+
+        double* findRobotVelocities(Vector2 pos, double heading) {
+            findTargetPoint(pos);
+            Vector2 dvec = lookaheadPoint-pos;
+            double curvature = (dvec.x * 2) / (dvec.x * dvec.x + dvec.y * dvec.y);
+            signed char side = signum(sin(heading)*(dvec.x)-cos(heading)*(dvec.y));
+            double sigCurve = side*curvature;
+            vel[0] = maxRelVel*(2+sigCurve*trackwidth)/2;
+            vel[1] = maxRelVel*(2-sigCurve*trackwidth)/2;
+            return vel;
         }
 };

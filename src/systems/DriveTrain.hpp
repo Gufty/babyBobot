@@ -8,12 +8,14 @@ using namespace pros;
 
 struct DriveTrain {
     Motor fl_mtr = Motor(fl_p);
+    Motor btl_mtr = Motor(btl_p, true);
     Motor bl_mtr = Motor(bl_p);
     Motor fr_mtr = Motor(fr_p);
+    Motor btr_mtr = Motor(btr_p, true);
     Motor br_mtr = Motor(br_p);
 
-    Motor_Group left_g =  Motor_Group({fl_mtr,bl_mtr});
-    Motor_Group right_g = Motor_Group({fr_mtr,br_mtr});
+    Motor_Group left_g =  Motor_Group({fl_mtr, btl_mtr, bl_mtr});
+    Motor_Group right_g = Motor_Group({fr_mtr, btr_mtr, br_mtr});
 
     std::function<void(void)> teleMove;
 
@@ -27,8 +29,8 @@ struct DriveTrain {
     }
 
     inline void tankDrive(signed char leftY, signed char rightY){
-        left_g.move(abs(leftY)<threshold ? 0 :leftY);
-        right_g.move(abs(rightY)<threshold ? 0 :rightY);
+        left_g.move(abs(leftY)<threshold ? 0 :leftY*leftY/127);
+        right_g.move(abs(rightY)<threshold ? 0 :rightY*rightY/127);
     }
 
     inline void arcadeDrive(signed char leftY, signed char rightX) {
