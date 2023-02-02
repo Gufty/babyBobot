@@ -24,7 +24,7 @@ Odometry odom = Odometry(&dt, &odometryInfo);
 
 bool arcade;
 
-inline lv_res_t toggleMode(lv_obj_t * btn)
+inline lv_res_t toggleMode(lv_obj_t * btn)//changes the robot to tank or arcade drive
 {
     if (arcade) {
 	dt.teleMove = [=]{dt.tankDrive(master.get_analog(E_CONTROLLER_ANALOG_LEFT_Y),master.get_analog(E_CONTROLLER_ANALOG_RIGHT_Y));};
@@ -40,7 +40,7 @@ inline lv_res_t toggleMode(lv_obj_t * btn)
 
 bool rightSide;
 
-inline lv_res_t toggleSide(lv_obj_t * btn) {
+inline lv_res_t toggleSide(lv_obj_t * btn) {//changes to right or left
 	rightSide = !rightSide;
 
 	btnSetToggled(btn, rightSide);
@@ -95,7 +95,7 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void autonomous() {
+void autonomous() {//hard coded auton, change depending on who we are allies are
 	//odom.loadPath("/usd/points.dat", "/usd/distances.dat");
 	//odom.followPath();
 	if (rightSide) {
@@ -126,20 +126,20 @@ void autonomous() {
  * task, not resume it from where it left off.
  */
 void opcontrol() {
-	unsigned int startTime = millis();
+	unsigned int startTime = millis();//time of when it starts, mostly used to make sure that the drive does not fat finger end game.
 	unsigned int xChangeTime;
-	bool xChange = false;
-	bool cPass = false;
+	bool xChange = false;//if end game has changed
+	bool cPass = false;//cata thing
 	while (true) {
-		dt.teleMove();
+		dt.teleMove();//a function that links back to toggle mode where telemove was remade to either be tank or arcade drive
 
 		if (master.get_digital(E_CONTROLLER_DIGITAL_R1)) {troll.move(127);}
 		else if (master.get_digital(E_CONTROLLER_DIGITAL_R2)) {troll.move(-127);}
 		else {troll.move(0);}
 
-		if(millis()-startTime >= 90000){
-			if (master.get_digital(E_CONTROLLER_DIGITAL_A)) {xtend.set(true); xChange=true; xChangeTime=millis();}
-			if (xChange && millis()-xChangeTime >= 500) {xtend.set(false); xChange=false;}
+		if(millis()-startTime >= 90000){//checks if the 90 seconds are up to be able to use end game
+			if (master.get_digital(E_CONTROLLER_DIGITAL_A)) {xtend.set(true); xChange=true; xChangeTime=millis();}//end game has changed and so has the change in time
+			if (xChange && millis()-xChangeTime >= 500) {xtend.set(false); xChange=false;}//after 1 and a half seconds change end game back to normal
 		}
 
 		cPass = !master.get_digital(E_CONTROLLER_DIGITAL_B);
