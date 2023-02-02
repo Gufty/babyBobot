@@ -34,15 +34,16 @@ class Odometry {
 		double heading = pi/2;
 		double leftEncoder, rightEncoder;
 
-		void odomTick(){
+		void odomTick(){//real stuff
 			while(true) {
-			newLeft = (dt->fl_mtr.get_position() + dt->bl_mtr.get_position()) / 2 * inchesPerTick;
-			newRight = (dt->fr_mtr.get_position() + dt->br_mtr.get_position()) / 2 * inchesPerTick;
+			newLeft = (dt->fl_mtr.get_position() + dt->bl_mtr.get_position()) / 2 * inchesPerTick;//avrg amount of left motors of front and back motor.
+			newRight = (dt->fr_mtr.get_position() + dt->br_mtr.get_position()) / 2 * inchesPerTick;//avrg amount of right motors of front and back motor.
 			
+			//change in how much it moved
 			dLeft = newLeft - leftEncoder;
 			dRight = newRight - rightEncoder;
 
-			phi = (dRight-dLeft)/trackwidth;
+			phi = (dRight-dLeft)/trackwidth;//change in angle
 
 			if (phi == 0) {
 				pos.x += dLeft*cos(heading);
@@ -101,7 +102,7 @@ class Odometry {
 */
 			p = Path(points, n);
 		}
-		void followPath() {
+		void followPath() { //check if the current posotion is wihtin the range of the last points and the path, if they are good, if not...gg
 			while (pos.x != p.nPoints[p.n-1].x && pos.y != p.nPoints[p.n-1].y) {
 				dt->left_g.move_velocity(vel[0]);
 				dt->right_g.move_velocity(vel[1]);
