@@ -8,7 +8,7 @@
 
 class Path {
     public:
-        Vector2* pPoints;
+        Vector2* pPoints;//primitive points are points that are given to use
         unsigned short n;
 
         Vector2* nPoints;
@@ -37,32 +37,32 @@ class Path {
         Vector2 lookaheadPoint;
 
         void createPath() {
-            unsigned short pNum = 0;
-            unsigned short pNumL[n-1];
+            unsigned short pNum = 0;//# of points that we want
+            unsigned short pNumL[n-1];//number of points in a line
             lines = (Line*)malloc(sizeof(Line)*(n-1));
-            for (unsigned short i = 0; i < n-1; i++) {
+            for (unsigned short i = 0; i < n-1; i++) {//find the distance between each line and devide the points by the spacing that we want
                 lines[i] = Line(pPoints[i], pPoints[i+1]);
                 pNumL[i] = lines[i].disBtwnCords/spacing;
                 pNum += pNumL[i];
             }
 
-            nPoints = (Vector2*)malloc(sizeof(Vector2)*(pNum+1));
+            nPoints = (Vector2*)malloc(sizeof(Vector2)*(pNum+1));//new points
             pNum = 0;
 
             for (unsigned short i = 0; i < n-1; i++) {
-                for (unsigned short v = 0; v < pNumL[i]; v++) {
+                for (unsigned short v = 0; v < pNumL[i]; v++) {//v is a ration in which we know how much to move in a certain amount.
                     //Point injection given spacing
-                    nPoints[pNum+v] = lines[i].ratioToCoordinate(((double)v)/pNumL[i]);
+                    nPoints[pNum+v] = lines[i].ratioToCoordinate(((double)v)/pNumL[i]);//basically creates more points in a line so that your spacing is correct
                 }
                 pNum += pNumL[i];
             }
 
-            nPoints[pNum] = lines[n-2].endPos;
+            nPoints[pNum] = lines[n-2].endPos;//creates the path
             n=pNum;
                 
-            nPoints = smoother(nPoints, 1, 1, 100);
+            nPoints = smoother(nPoints, 1, 1, 100);//idk smooths stuff
             
-            free(lines);
+            free(lines);//delete lines
             lines = (Line*)malloc(sizeof(Line)*(n-1));
             distAtPoint = new double[n];
             headingAtPoint = new double[n];
