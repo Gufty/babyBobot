@@ -21,9 +21,7 @@ class Odometry {
 	private:
 		DriveTrain* dt;
 		lv_obj_t** odometryInfo;
-		
-		Vector2 points[4] = {{0,0},{48,0},{48,48},{0,48}};
-		Path p = Path(points,4);
+		Path p;
 		
 		double newLeft, newRight;
 		double phi;
@@ -79,8 +77,8 @@ class Odometry {
         Odometry(DriveTrain* dt, lv_obj_t** odometryInfo):dt(dt), odometryInfo(odometryInfo){}
 		Task odomTask{std::bind(&Odometry::odomTick, this)};
 
-		inline void loadPath(const char* path2points, const char* path2dists) {
-			unsigned short n = 1;
+		inline void loadPath(Vector2* points, unsigned short n) {
+/*			unsigned short n = 1;
 			FILE* points_read = fopen(path2points, "r");
 
 			if (points_read == NULL)
@@ -100,11 +98,14 @@ class Odometry {
 				fscanf(points_read, "%lf,%lf ", &points[i].x, &points[i].y);
 			}
 			fclose(points_read);
-
+*/
 			p = Path(points, n);
 		}
 		void followPath() {
-			dt->left_g.move_velocity(vel[0]);
-			dt->right_g.move_velocity(vel[1]);
+			while (pos.x != p.nPoints[p.n-1].x && pos.y != p.nPoints[p.n-1].y) {
+				dt->left_g.move_velocity(vel[0]);
+				dt->right_g.move_velocity(vel[1]);
+			}
+			dt->tankDrive(0,0);
 		}
 };

@@ -129,27 +129,24 @@ void opcontrol() {
 	unsigned int startTime = millis();
 	unsigned int xChangeTime;
 	bool xChange = false;
-	bool cRestrict = true;
+	bool cPass = false;
 	while (true) {
 		dt.teleMove();
 
-		if (master.get_digital(E_CONTROLLER_DIGITAL_L1)) {troll.move(127);}
-		else if (master.get_digital(E_CONTROLLER_DIGITAL_L2)) {troll.move(-127);}
+		if (master.get_digital(E_CONTROLLER_DIGITAL_R1)) {troll.move(127);}
+		else if (master.get_digital(E_CONTROLLER_DIGITAL_R2)) {troll.move(-127);}
 		else {troll.move(0);}
-
-		/*if (master.get_digital(E_CONTROLLER_DIGITAL_R1)) {intax.move(127);}
-		else if (master.get_digital(E_CONTROLLER_DIGITAL_R2)) {intax.move(-127);}
-		else {intax.move(0);}*/
 
 		if(millis()-startTime >= 90000){
 			if (master.get_digital(E_CONTROLLER_DIGITAL_A)) {xtend.set(true); xChange=true; xChangeTime=millis();}
 			if (xChange && millis()-xChangeTime >= 500) {xtend.set(false); xChange=false;}
 		}
 
-		if (master.get_digital(E_CONTROLLER_DIGITAL_B)) {cRestrict=false;} else {cRestrict = true;}
+		cPass = !master.get_digital(E_CONTROLLER_DIGITAL_B);
 
-		if (master.get_digital(E_CONTROLLER_DIGITAL_R1)) {cata.move(127,cRestrict);}
-		if (master.get_digital(E_CONTROLLER_DIGITAL_R2)) {cata.move(-127,cRestrict);}
+		if (master.get_digital(E_CONTROLLER_DIGITAL_L1)) {cata.move(127,cPass);}
+		else if (master.get_digital(E_CONTROLLER_DIGITAL_L2)) {cata.move(-127,cPass);}
+		else {cata.move(0,cPass);}
 		
         delay(20);
     }

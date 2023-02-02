@@ -7,11 +7,12 @@
 #include <math.h>
 
 class Path {
-    private:
+    public:
         Vector2* pPoints;
         unsigned short n;
 
         Vector2* nPoints;
+    private:
         Line* lines;
 
         double* distAtPoint;
@@ -36,8 +37,8 @@ class Path {
         Vector2 lookaheadPoint;
 
         void createPath() {
-            unsigned int pNum = 0;
-            unsigned int pNumL[n-1];
+            unsigned short pNum = 0;
+            unsigned short pNumL[n-1];
             lines = (Line*)malloc(sizeof(Line)*(n-1));
             for (unsigned short i = 0; i < n-1; i++) {
                 lines[i] = Line(pPoints[i], pPoints[i+1]);
@@ -49,7 +50,7 @@ class Path {
             pNum = 0;
 
             for (unsigned short i = 0; i < n-1; i++) {
-                for (unsigned int v = 0; v < pNumL[i]; v++) {
+                for (unsigned short v = 0; v < pNumL[i]; v++) {
                     //Point injection given spacing
                     nPoints[pNum+v] = lines[i].ratioToCoordinate(((double)v)/pNumL[i]);
                 }
@@ -63,8 +64,8 @@ class Path {
             
             free(lines);
             lines = (Line*)malloc(sizeof(Line)*(n-1));
-            distAtPoint = new double[n-1];
-            headingAtPoint = new double[n-1];
+            distAtPoint = new double[n];
+            headingAtPoint = new double[n];
             radius = new double[n-3];
             curvature = new double[n-3];
             oVel = new double[n-3];
@@ -74,10 +75,13 @@ class Path {
             double k1,k2,a,b;
             double x1,x2,xx2,x3,y1,y2,yy2,y3;
 
+            distAtPoint[0] = 0;
+            headingAtPoint[0] = 0;
+
             for (unsigned short i = 0; i < n-1; i++) {
                 lines[i] = Line(nPoints[i], nPoints[i+1]);
-                distAtPoint[i] = ((i==0) ? 0 : distAtPoint[i-1]) + lines[i].disBtwnCords;
-                headingAtPoint[i] = (i==0) ? 0 : headingAtPoint[i-1] + nPoints[i].headingTo(headingAtPoint[i-1], nPoints[i+1]);
+                distAtPoint[i+1] = distAtPoint[i] + lines[i].disBtwnCords;
+                headingAtPoint[i+1] = headingAtPoint[i] + nPoints[i].headingTo(headingAtPoint[i], nPoints[i+1]);
                 if (i<n-3) {
                     v=i+1; h=v+1;
 

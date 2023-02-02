@@ -7,9 +7,9 @@ using namespace Constants;
 using namespace pros;
 
 struct DriveTrain {
-    Motor fl_mtr = Motor(fl_p);
-    Motor btl_mtr = Motor(btl_p, true);
-    Motor bl_mtr = Motor(bl_p);
+    Motor fl_mtr = Motor(fl_p, true);
+    Motor btl_mtr = Motor(btl_p);
+    Motor bl_mtr = Motor(bl_p, true);
     Motor fr_mtr = Motor(fr_p);
     Motor btr_mtr = Motor(btr_p, true);
     Motor br_mtr = Motor(br_p);
@@ -22,15 +22,15 @@ struct DriveTrain {
     DriveTrain() {
         left_g.set_brake_modes(E_MOTOR_BRAKE_HOLD);
         right_g.set_brake_modes(E_MOTOR_BRAKE_HOLD);
-        left_g.set_reversed(true);
+        //left_g.set_reversed(true);
    
         left_g.tare_position();
         right_g.tare_position();
     }
 
     inline void tankDrive(signed char leftY, signed char rightY){
-        left_g.move(abs(leftY)<threshold ? 0 :leftY*leftY/127);
-        right_g.move(abs(rightY)<threshold ? 0 :rightY*rightY/127);
+        left_g.move(abs(leftY)<threshold ? 0 :leftY);
+        right_g.move(abs(rightY)<threshold ? 0 :rightY);
     }
 
     inline void arcadeDrive(signed char leftY, signed char rightX) {
