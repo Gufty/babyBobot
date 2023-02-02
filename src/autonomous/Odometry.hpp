@@ -45,7 +45,7 @@ class Odometry {
 
 			phi = (dRight-dLeft)/trackwidth;//change in angle
 
-			if (phi == 0) {
+			if (phi == 0) {//get the values from pos and set them, if not do cool math and get the actual position values
 				pos.x += dLeft*cos(heading);
 				pos.y += dLeft*sin(heading);
 			} else {
@@ -57,11 +57,11 @@ class Odometry {
 				pos.x += (rCenter)*(-hSin + pSin*hCos + hSin*pCos);
 				pos.y += (rCenter)*(hCos - pCos*hCos + hSin*pSin);
 			}
-			heading+=phi;
+			heading+=phi;//where you are globally
 
-			heading = headingRestrict(heading);
+			heading = headingRestrict(heading);//if it is greater than 2pi, set it back to 0 be subtractin 2pi
 
-			vel = p.findRobotVelocities(pos, heading);
+			vel = p.findRobotVelocities(pos, heading);// your velocity will depend on where you are and where you are looking at.
 
 			//std::cout << pos.x << " " << pos.y << " " << heading*radToDeg << " " << phi*radToDeg << std::endl;
 
